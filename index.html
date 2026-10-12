@@ -1,0 +1,169 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FILET HOTEL - Room Management</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  color: #172554;
+}
+header {
+  background: #102b4e;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+main { padding: 16px; }
+button {
+  background: #102b4e;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+.back { margin-bottom: 15px; }
+.card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin: 12px 0;
+  box-shadow: 0 2px 6px #00000010;
+}
+input, select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  margin: 7px 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 16px;
+}
+.room {
+  border-left: 5px solid #16a34a;
+}
+.status {
+  font-weight: bold;
+  color: #15803d;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h2>FILET HOTEL</h2>
+  <div>Room Management</div>
+</header>
+
+<main>
+  <button class="back" onclick="goHome()">← Dashboard</button>
+
+  <div class="card">
+    <h3>Add New Room</h3>
+
+    <label>Room Number</label>
+    <input id="roomNo" placeholder="Example: 101">
+
+    <label>Room Type</label>
+    <select id="roomType">
+      <option>Single</option>
+      <option>Double</option>
+      <option>Twin</option>
+      <option>VIP</option>
+      <option>Family</option>
+    </select>
+
+    <label>Price Per Night (ETB)</label>
+    <input id="roomPrice" type="number" placeholder="Example: 1500">
+
+    <button onclick="addRoom()">Add Room</button>
+  </div>
+
+  <h3>Hotel Rooms</h3>
+  <div id="roomList"></div>
+</main>
+
+<script>
+let rooms = JSON.parse(localStorage.getItem("filetRooms") || "[]");
+
+function saveRooms() {
+  localStorage.setItem("filetRooms", JSON.stringify(rooms));
+}
+
+function addRoom() {
+  let no = document.getElementById("roomNo").value.trim();
+  let type = document.getElementById("roomType").value;
+  let price = document.getElementById("roomPrice").value;
+
+  if (!no || !price || Number(price) <= 0) {
+    alert("Please enter room number and a valid price.");
+    return;
+  }
+
+  if (rooms.some(room => room.no === no)) {
+    alert("This room number already exists.");
+    return;
+  }
+
+  rooms.push({
+    no: no,
+    type: type,
+    price: Number(price),
+    status: "Available"
+  });
+
+  saveRooms();
+  document.getElementById("roomNo").value = "";
+  document.getElementById("roomPrice").value = "";
+  showRooms();
+}
+
+function showRooms() {
+  let list = document.getElementById("roomList");
+  list.innerHTML = "";
+
+  if (rooms.length === 0) {
+    list.innerHTML = "<p>No rooms added yet.</p>";
+    return;
+  }
+
+  rooms.forEach((room, index) => {
+    list.innerHTML += `
+      <div class="card room">
+        <h3>Room ${room.no}</h3>
+        <p>Type: ${room.type}</p>
+        <p>Price: ${room.price} ETB / night</p>
+        <p><strong>Status: ${room.status}</strong></p>
+        <button onclick="changeStatus(${index})">
+          Change Room Status
+        </button>
+      </div>
+    `;
+  });
+}
+
+function changeStatus(index) {
+  rooms[index].status =
+    rooms[index].status === "Available" ? "Occupied" : "Available";
+
+  saveRooms();
+  showRooms();
+}
+
+function goHome() {
+  alert("Dashboard will be connected in the next step.");
+}
+
+showRooms();
+</script>
+
+
+</body>
+</html>
+

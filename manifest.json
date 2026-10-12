@@ -1,0 +1,11 @@
+{
+  "name": "FILET HOTEL SYSTEM",
+  "short_name": "FILET HOTEL",
+  "description": "Hotel Management System",
+  "start_url": "./dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef2f7",
+  "theme_color": "#102b4e"
+}

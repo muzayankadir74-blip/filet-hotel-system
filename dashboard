@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FILET HOTEL SYSTEM</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#eef2f7;color:#102b4e}
+header{background:#102b4e;color:white;padding:24px 12px;text-align:center;border-radius:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+button{width:100%;min-height:110px;padding:14px;background:white;color:#102b4e;border:2px solid #dbe4ef;border-radius:12px;font-size:17px;font-weight:bold}
+button:active{background:#dbeafe}
+footer{text-align:center;margin-top:25px;color:#64748b;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>FILET HOTEL</h1>
+<p>Hotel Management System</p>
+<p>Welcome to Your Hotel Dashboard</p>
+</header>
+
+<div class="grid">
+<button onclick="location.href='index.html'">🏨<br>Room Management</button>
+<button onclick="location.href='guest-registration.html'">👤<br>Guest Registration</button>
+<button onclick="location.href='bookings.html'">📅<br>Bookings</button>
+<button onclick="location.href='payments.html'">💳<br>Payments</button>
+</div>
+
+<footer>
+<p>FILET HOTEL SYSTEM</p>
+<p>Manage Rooms • Guests • Bookings • Payments</p>
+</footer>
+
+</body>
+</html>

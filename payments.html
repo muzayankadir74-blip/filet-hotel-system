@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FILET HOTEL - Payments</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#f1f5f9;color:#172554}
+header{background:#102b4e;color:white;padding:20px;text-align:center;border-radius:12px}
+.card{background:white;padding:16px;margin-top:14px;border-radius:12px}
+label{display:block;margin-top:12px}
+input,select{width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px;background:white}
+button{width:100%;padding:13px;margin-top:16px;background:#102b4e;color:white;border:0;border-radius:8px;font-size:16px}
+.payment{border-left:5px solid #16a34a}
+.back{background:#475569}
+</style>
+</head>
+<body>
+<header>
+<h2>FILET HOTEL</h2>
+<p>Payments & Receipts</p>
+</header>
+
+<div class="card">
+<h3>Record Payment</h3>
+
+<label>Guest Name</label>
+<input id="name" placeholder="Guest full name">
+
+<label>Room Number</label>
+<input id="room" placeholder="Example: 101">
+
+<label>Payment Amount (ETB)</label>
+<input id="amount" type="number" min="0.01" step="0.01" placeholder="Amount paid">
+
+<label>Payment Method</label>
+<select id="method">
+<option value="Cash">Cash</option>
+<option value="Bank Transfer">Bank Transfer</option>
+<option value="Mobile Money">Mobile Money</option>
+<option value="POS">POS</option>
+</select>
+
+<label>Payment Date</label>
+<input id="date" type="date">
+
+<button onclick="addPayment()">Save Payment</button>
+<button class="back" onclick="location.href='dashboard.html'">Back to Dashboard</button>
+</div>
+
+<div class="card">
+<h3>Payment Summary</h3>
+<p>Total Payments: <strong id="total">0 ETB</strong></p>
+<p>Number of Transactions: <strong id="count">0</strong></p>
+</div>
+
+<h3>Payment History</h3>
+<div id="list"></div>
+
+<script>
+let payments=JSON.parse(localStorage.getItem("filetPayments")||"[]");
+
+document.getElementById("date").value =
+  new Date().toLocaleDateString("en-CA");
+
+function addPayment(){
+ const name=document.getElementById("name").value.trim();
+ const room=document.getElementById("room").value.trim();
+ const amount=Number(document.getElementById("amount").value);
+ const method=document.getElementById("method").value;
+ const date=document.getElementById("date").value;
+
+ if(!name||!room||!date||!document.getElementById("amount").value){
+  alert("Please complete all fields.");
+  return;
+ }
+ if(!Number.isFinite(amount)||amount<=0){
+  alert("Enter a payment amount greater than zero.");
+  return;
+ }
+
+ payments.push({
+  id:Date.now(),name,room,amount,method,date
+ });
+
+ localStorage.setItem("filetPayments",JSON.stringify(payments));
+ showPayments();
+ alert("Payment recorded successfully!");
+
+ document.getElementById("name").value="";
+ document.getElementById("room").value="";
+ document.getElementById("amount").value="";
+}
+
+function showPayments(){
+ const list=document.getElementById("list");
+ list.innerHTML="";
+ let sum=0;
+
+ if(payments.length===0){
+  list.textContent="No payments recorded yet.";
+ } else {
+  payments.slice().reverse().forEach(p=>{
+   sum+=p.amount;
+   const card=document.createElement("div");
+   card.className="card payment";
+   const info=document.createElement("p");
+   info.textContent="Guest: "+p.name+
+    " | Room: "+p.room+
+    " | Amount: "+p.amount.toLocaleString()+" ETB"+
+    " | Method: "+p.method+
+    " | Date: "+p.date;
+   card.appendChild(info);
+   list.appendChild(card);
+  });
+ }
+ document.getElementById("total").textContent=sum.toLocaleString()+" ETB";
+ document.getElementById("count").textContent=payments.length;
+}
+showPayments();
+</script>
+</body>
+</html>
