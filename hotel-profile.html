@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FILET HOTEL SYSTEM</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:16px;color:#172554}
+header{background:#12345a;color:white;padding:20px;border-radius:14px;text-align:center}
+main{max-width:520px;margin:20px auto;background:white;padding:20px;border-radius:14px;box-shadow:0 3px 12px #0001}
+label{display:block;margin-top:14px;font-weight:bold}
+input,textarea{width:100%;padding:12px;margin-top:6px;border:1px solid #cbd5e1;border-radius:8px;font-size:16px}
+button{width:100%;padding:13px;margin-top:16px;background:#087f5b;color:white;border:0;border-radius:8px;font-size:16px;font-weight:bold}
+#logoPreview{max-width:120px;max-height:120px;display:block;margin:12px auto}
+#message{color:#087f5b;text-align:center;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h1>FILET HOTEL SYSTEM</h1>
+<p>Hotel Profile — Odeeffannoo Hoteelaa</p>
+</header>
+
+<main>
+<h2>Odeeffannoo Hoteelaa</h2>
+
+<form id="hotelForm">
+<label>Maqaa Hoteelaa</label>
+<input id="hotelName" required placeholder="Maqaa hoteelaa galchi">
+
+<label>Lakkoofsa Bilbilaa</label>
+<input id="phone" type="tel" placeholder="Lakkoofsa bilbilaa">
+
+<label>Email</label>
+<input id="email" type="email" placeholder="Email hoteelaa">
+
+<label>Teessoo Hoteelaa</label>
+<textarea id="address" rows="3" placeholder="Magaalaa fi teessoo"></textarea>
+
+<label>Logo Hoteelaa</label>
+<input id="logo" type="file" accept="image/*">
+<img id="logoPreview" alt="Logo hoteelaa" hidden>
+
+<button type="submit">Save Hotel Profile</button>
+<p id="message"></p>
+</form>
+</main>
+
+<script>
+const form = document.getElementById("hotelForm");
+const logoInput = document.getElementById("logo");
+const logoPreview = document.getElementById("logoPreview");
+const message = document.getElementById("message");
+
+let logoData = "";
+
+function loadProfile() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("filetHotelProfile") || "{}");
+    hotelName.value = saved.hotelName || "";
+    phone.value = saved.phone || "";
+    email.value = saved.email || "";
+    address.value = saved.address || "";
+    logoData = saved.logo || "";
+
+    if (logoData) {
+      logoPreview.src = logoData;
+      logoPreview.hidden = false;
+    }
+  } catch (error) {
+    message.textContent = "Odeeffannoo duraanii banuun hin danda'amne.";
+  }
+}
+
+logoInput.addEventListener("change", function() {
+  const file = this.files[0];
+  if (!file) return;
+
+  if (file.size > 1000000) {
+    alert("Logo xiqqeessi; faayilli 1 MB gadi ta'uu qaba.");
+    this.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function() {
+    logoData = reader.result;
+    logoPreview.src = logoData;
+    logoPreview.hidden = false;
+  };
+  reader.readAsDataURL(file);
+});
+
+form.addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const profile = {
+    hotelName: hotelName.value.trim(),
+    phone: phone.value.trim(),
+    email: email.value.trim(),
+    address: address.value.trim(),
+    logo: logoData
+  };
+
+  try {
+    localStorage.setItem("filetHotelProfile", JSON.stringify(profile));
+    message.textContent = "Odeeffannoon hoteelaa kuufameera!";
+  } catch (error) {
+    message.textContent = "Kuusuun hin milkoofne. Logo xiqqeessi.";
+  }
+});
+
+loadProfile();
+</script>
+</body>
+</html>
