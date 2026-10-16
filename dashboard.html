@@ -6,119 +6,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#12345a">
 <title>FILET HOTEL SYSTEM - Dashboard</title>
-
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#f1f5f9;
-  color:#172554;
-}
-header{
-  background:#12345a;
-  color:white;
-  padding:25px 16px;
-  text-align:center;
-}
-header h1{margin:0 0 8px}
-header p{margin:0;color:#dbeafe}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#172554}
+header{background:#12345a;color:white;padding:25px 16px;text-align:center}
 main{max-width:650px;margin:20px auto;padding:16px}
-.welcome{
-  background:white;
-  padding:18px;
-  border-radius:14px;
-  margin-bottom:18px;
-}
-.menu{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-.menu a{
-  background:white;
-  padding:20px 10px;
-  border-radius:12px;
-  text-align:center;
-  text-decoration:none;
-  color:#12345a;
-  font-weight:bold;
-  box-shadow:0 2px 8px #0001;
-}
-.menu a span{
-  display:block;
-  font-size:30px;
-  margin-bottom:10px;
-}
-.profile{
-  background:#12345a;
-  color:white;
-  margin-top:20px;
-  padding:20px;
-  text-align:center;
-  border-radius:14px;
-}
-.profile a{
-  display:inline-block;
-  background:#16a085;
-  color:white;
-  text-decoration:none;
-  padding:12px 20px;
-  border-radius:8px;
-  font-weight:bold;
-}
-footer{text-align:center;padding:20px;color:#64748b;font-size:13px}
+.welcome,.menu a{background:white;padding:18px;border-radius:12px}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.menu a{text-align:center;text-decoration:none;color:#12345a;font-weight:bold}
+.menu span{display:block;font-size:28px;margin-bottom:8px}
+.profile{margin-top:20px;padding:20px;border-radius:12px;text-align:center;color:white}
+.hotel{background:#12345a}
+.login{background:#0f766e}
+.profile a{display:inline-block;background:white;color:#12345a;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold}
+footer{text-align:center;padding:20px;color:#64748b}
 </style>
 </head>
-
 <body>
 <header>
-  <h1>FILET HOTEL SYSTEM</h1>
-  <p>Hotel Management Dashboard</p>
+<h1>FILET HOTEL SYSTEM</h1>
+<p>Hotel Management Dashboard</p>
 </header>
 
 <main>
-  <section class="welcome">
-    <h2>Welcome!</h2>
-    <p>Sirna bulchiinsa hoteelaa kee keessaa fuula barbaaddu filadhu.</p>
-  </section>
+<section class="welcome">
+<h2>Welcome!</h2>
+<p>Sirna bulchiinsa hoteelaa kee keessaa fuula barbaaddu filadhu.</p>
+</section>
 
-  <section class="menu">
-    <a href="index.html">
-      <span>🛏️</span>
-      Room Management
-    </a>
+<section class="menu">
+<a href="index.html"><span>🛏️</span>Room Management</a>
+<a href="guest-registration.html"><span>👤</span>Guest Registration</a>
+<a href="bookings.html"><span>📅</span>Bookings</a>
+<a href="payments.html"><span>💳</span>Payments</a>
+<a href="guests.html"><span>📋</span>Guest Records</a>
+</section>
 
-    <a href="guest-registration.html">
-      <span>👤</span>
-      Guest Registration
-    </a>
+<section class="profile hotel">
+<h2>🏨 Hotel Profile</h2>
+<p>Maqaa, bilbila, email fi teessoo hoteelaa galmeessi.</p>
+<a href="hotel-profile.html">Open Hotel Profile</a>
+</section>
 
-    <a href="bookings.html">
-      <span>📅</span>
-      Bookings
-    </a>
-
-    <a href="payments.html">
-      <span>💳</span>
-      Payments
-    </a>
-
-    <a href="guests.html">
-      <span>📋</span>
-      Guest Records
-    </a>
-  </section>
-
-  <section class="profile">
-    <h2>🏨 Hotel Profile</h2>
-    <p>Maqaa, bilbila, email fi teessoo hoteelaa kee galmeessi.</p>
-    <a href="hotel-profile.html">Open Hotel Profile</a>
-  </section>
+<section class="profile login">
+<h2>🔐 Hotel Login</h2>
+<p>Username fi password keessaniin seenuuf.</p>
+<a href="hotel-login.html">Open Hotel Login</a>
+</section>
 </main>
 
-<footer>
-  FILET HOTEL SYSTEM © 2026
-</footer>
+<footer>FILET HOTEL SYSTEM © 2026</footer>
 </body>
 </html>
+
