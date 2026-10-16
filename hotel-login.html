@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#12345a">
+<title>FILET HOTEL SYSTEM - Login</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  font-family:Arial,sans-serif;
+  background:#eef2f7;
+  color:#12345a;
+}
+.login-box{
+  background:white;
+  width:100%;
+  max-width:400px;
+  padding:26px;
+  border-radius:16px;
+  box-shadow:0 5px 24px #0002;
+}
+h1{text-align:center;font-size:24px}
+.subtitle{text-align:center;color:#64748b}
+label{display:block;margin-top:18px;font-weight:bold}
+input{
+  width:100%;
+  padding:13px;
+  margin-top:7px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  font-size:16px;
+}
+button{
+  width:100%;
+  padding:13px;
+  margin-top:22px;
+  background:#087f5b;
+  color:white;
+  border:0;
+  border-radius:8px;
+  font-size:16px;
+  font-weight:bold;
+}
+#message{margin-top:16px;text-align:center}
+.back{text-align:center;margin-top:20px}
+a{color:#087f5b}
+.notice{font-size:13px;color:#64748b;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="login-box">
+  <h1>🏨 FILET HOTEL SYSTEM</h1>
+  <p class="subtitle">Hotel Staff Login</p>
+
+  <form id="loginForm">
+    <label for="username">Username</label>
+    <input id="username" name="username"
+      autocomplete="username" required
+      placeholder="Enter your username">
+
+    <label for="password">Password</label>
+    <input id="password" name="password"
+      type="password" autocomplete="current-password"
+      required placeholder="Enter your password">
+
+    <button type="submit">Login</button>
+  </form>
+
+  <p id="message" role="status"></p>
+
+  <p class="notice">
+    Kun fuula login yaalii qofa. Hanga server fi database
+    nageenya qabu itti hin daballetti username fi password
+    dhugaa hin galchin.
+  </p>
+
+  <div class="back">
+    <a href="dashboard.html">Back to Dashboard</a>
+  </div>
+</div>
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+  document.getElementById("message").textContent =
+    "Login server nageenya qabu itti dabaluun barbaachisa.";
+});
+</script>
+</body>
+</html>
