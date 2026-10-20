@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -6,6 +7,7 @@
   <meta name="theme-color" content="#102b4e">
   <meta name="description" content="FILET HOTEL Management System">
   <title>FILET HOTEL SYSTEM</title>
+
   <link rel="manifest" href="./manifest.json">
 
   <style>
@@ -24,7 +26,7 @@
       background: #102b4e;
       color: white;
       text-align: center;
-      padding: 20px 15px;
+      padding: 24px 15px;
     }
 
     .hotel-logo {
@@ -162,12 +164,14 @@
             console.log("Service worker registered.");
           })
           .catch(function (error) {
-            console.log("Service worker registration failed:", error);
+            console.log(
+              "Service worker registration failed:",
+              error
+            );
           });
       });
     }
   </script>
 </body>
 </html>
-  
 
