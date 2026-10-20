@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#102b4e">
+  <title>Room Management - FILET HOTEL</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #eef2f7;
+      color: #102b4e;
+    }
+
+    header {
+      background: #102b4e;
+      color: white;
+      text-align: center;
+      padding: 20px 12px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+    }
+
+    main {
+      max-width: 650px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .panel {
+      background: white;
+      padding: 18px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 7px #00000012;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #102b4e;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .room {
+      padding: 12px;
+      margin-top: 10px;
+      border: 1px solid #dbe3ed;
+      border-radius: 8px;
+    }
+
+    .available {
+      color: #15803d;
+      font-weight: bold;
+    }
+
+    .occupied {
+      color: #b91c1c;
+      font-weight: bold;
+    }
+
+    .back {
+      display: inline-block;
+      color: white;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>🏨 FILET HOTEL</h1>
+    <p>Room Management - Bulchiinsa Kutaa</p>
+    <a class="back" href="./index.html">← Gara Fuula Jalqabaatti</a>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>➕ Kutaa Haaraa Galmeessi</h2>
+
+      <form id="roomForm">
+        <label for="roomNumber">Lakkoofsa Kutaa</label>
+        <input id="roomNumber" type="text" placeholder="Fakkeenya: 104" required>
+
+        <label for="roomType">Gosa Kutaa</label>
+        <select id="roomType" required>
+          <option value="">Gosa filadhu</option>
+          <option value="Single">Single</option>
+          <option value="Double">Double</option>
+          <option value="Twin">Twin</option>
+          <option value="Suite">Suite</option>
+        </select>
+
+        <label for="roomPrice">Gatii Halkan Tokko (ETB)</label>
+        <input id="roomPrice" type="number" min="0" placeholder="Fakkeenya: 1500" required>
+
+        <label for="roomStatus">Haala Kutaa</label>
+        <select id="roomStatus" required>
+          <option value="Available">Bilisa</option>
+          <option value="Occupied">Keessummaan keessa jira</option>
+          <option value="Cleaning">Qulqulleessaa jira</option>
+          <option value="Maintenance">Suphaa barbaada</option>
+        </select>
+
+        <button type="submit">Kutaa Galmeessi</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>🛏️ Kutaalee Hoteelaa</h2>
+      <p id="roomCount">Kutaan galmaa'e: 0</p>
+      <div id="roomList"></div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("roomForm");
+    const roomList = document.getElementById("roomList");
+    const roomCount = document.getElementById("roomCount");
+
+    let rooms = [];
+
+    try {
+      rooms = JSON.parse(localStorage.getItem("filetHotelRooms") || "[]");
+      if (!Array.isArray(rooms)) rooms = [];
+    } catch (error) {
+      rooms = [];
+    }
+
+    function saveRooms() {
+      localStorage.setItem("filetHotelRooms", JSON.stringify(rooms));
+    }
+
+    function renderRooms() {
+      roomList.replaceChildren();
+      roomCount.textContent = "Kutaan galmaa'e: " + rooms.length;
+
+      rooms.forEach((room, index) => {
+        const card = document.createElement("div");
+        card.className = "room";
+
+        const heading = document.createElement("h3");
+        heading.textContent = "Kutaa " + room.number;
+
+        const details = document.createElement("p");
+        details.textContent =
+          "Gosa: " + room.type +
+          " | Gatii: " + room.price + " ETB/halkan";
+
+        const status = document.createElement("p");
+        status.textContent = "Haala: " + room.status;
+        status.className =
+          room.status === "Available" ? "available" : "occupied";
+
+        const select = document.createElement("select");
+        [
+          ["Available", "Bilisa"],
+          ["Occupied", "Keessummaan keessa jira"],
+          ["Cleaning", "Qulqulleessaa jira"],
+          ["Maintenance", "Suphaa barbaada"]
+        ].forEach(function (item) {
+          const option = document.createElement("option");
+          option.value = item[0];
+          option.textContent = item[1];
+          select.appendChild(option);
+        });
+        select.value = room.status;
+
+        select.addEventListener("change", function () {
+          rooms[index].status = select.value;
+          saveRooms();
+          renderRooms();
+        });
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "Kutaa Haqi";
+        remove.style.marginTop = "8px";
+        remove.addEventListener("click", function () {
+          if (confirm("Kutaa kana haquu barbaaddaa?")) {
+            rooms.splice(index, 1);
+            saveRooms();
+            renderRooms();
+          }
+        });
+
+        card.append(heading, details, status, select, remove);
+        roomList.appendChild(card);
+      });
+
+      if (rooms.length === 0) {
+        roomList.textContent = "Ammaaf kutaan hin galmoofne.";
+      }
+    }
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const number = document.getElementById("roomNumber").value.trim();
+      const type = document.getElementById("roomType").value;
+      const price = Number(document.getElementById("roomPrice").value);
+      const status = document.getElementById("roomStatus").value;
+
+      if (!number || !type || price < 0) {
+        alert("Odeeffannoo guutuu sirriitti galchi.");
+        return;
+      }
+
+      if (rooms.some(function (room) {
+        return room.number.toLowerCase() === number.toLowerCase();
+      })) {
+        alert("Lakkoofsi kutaa kun duraan galmaa'eera.");
+        return;
+      }
+
+      rooms.push({ number, type, price, status });
+      saveRooms();
+      renderRooms();
+      form.reset();
+      alert("Kutaan bilisummaa bilbilaa kana irratti galmaa'eera.");
+    });
+
+    renderRooms();
+  </script>
+</body>
+</html>
