@@ -1,169 +1,154 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FILET HOTEL - Room Management</title>
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f1f5f9;
-  color: #172554;
-}
-header {
-  background: #102b4e;
-  color: white;
-  padding: 20px;
-  text-align: center;
-}
-main { padding: 16px; }
-button {
-  background: #102b4e;
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 15px;
-}
-.back { margin-bottom: 15px; }
-.card {
-  background: white;
-  padding: 16px;
-  border-radius: 12px;
-  margin: 12px 0;
-  box-shadow: 0 2px 6px #00000010;
-}
-input, select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  margin: 7px 0 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  font-size: 16px;
-}
-.room {
-  border-left: 5px solid #16a34a;
-}
-.status {
-  font-weight: bold;
-  color: #15803d;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#102b4e">
+  <meta name="description" content="FILET HOTEL Management System">
+
+  <title>FILET HOTEL SYSTEM</title>
+
+  <link rel="manifest" href="./manifest.json">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #eef2f7;
+      color: #102b4e;
+    }
+
+    header {
+      background: #102b4e;
+      color: white;
+      text-align: center;
+      padding: 30px 15px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 27px;
+    }
+
+    main {
+      max-width: 600px;
+      margin: auto;
+      padding: 18px;
+    }
+
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .menu a {
+      display: block;
+      background: white;
+      color: #102b4e;
+      text-decoration: none;
+      text-align: center;
+      padding: 20px 8px;
+      border-radius: 12px;
+      box-shadow: 0 2px 7px #00000012;
+      font-weight: bold;
+      min-height: 100px;
+    }
+
+    .menu a:active {
+      background: #dbeafe;
+    }
+
+    .icon {
+      display: block;
+      font-size: 27px;
+      margin-bottom: 9px;
+    }
+
+    .welcome {
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #64748b;
+      font-size: 13px;
+    }
+  </style>
 </head>
+
 <body>
+  <header>
+    <h1>FILET HOTEL</h1>
+    <p>Hotel Management System</p>
+  </header>
 
-<header>
-  <h2>FILET HOTEL</h2>
-  <div>Room Management</div>
-</header>
+  <main>
+    <div class="menu">
+      <a href="./dashboard.html">
+        <span class="icon">📊</span>
+        Dashboard
+      </a>
 
-<main>
-  <button class="back" onclick="goHome()">← Dashboard</button>
+      <a href="./guest-registration.html">
+        <span class="icon">👤</span>
+        Guest Registration
+      </a>
 
-  <div class="card">
-    <h3>Add New Room</h3>
+      <a href="./bookings.html">
+        <span class="icon">📅</span>
+        Bookings
+      </a>
 
-    <label>Room Number</label>
-    <input id="roomNo" placeholder="Example: 101">
+      <a href="./payments.html">
+        <span class="icon">💳</span>
+        Payments
+      </a>
 
-    <label>Room Type</label>
-    <select id="roomType">
-      <option>Single</option>
-      <option>Double</option>
-      <option>Twin</option>
-      <option>VIP</option>
-      <option>Family</option>
-    </select>
+      <a href="./room-management.html">
+        <span class="icon">🛏️</span>
+        Room Management
+      </a>
 
-    <label>Price Per Night (ETB)</label>
-    <input id="roomPrice" type="number" placeholder="Example: 1500">
+      <a href="./hotel-profile.html">
+        <span class="icon">🏨</span>
+        Hotel Profile
+      </a>
+    </div>
 
-    <button onclick="addRoom()">Add Room</button>
-  </div>
+    <div class="welcome">
+      <h3>Welcome to FILET HOTEL</h3>
+      <p>Manage your hotel operations in one place.</p>
+    </div>
+  </main>
 
-  <h3>Hotel Rooms</h3>
-  <div id="roomList"></div>
-</main>
+  <footer>
+    FILET HOTEL SYSTEM
+  </footer>
 
-<script>
-let rooms = JSON.parse(localStorage.getItem("filetRooms") || "[]");
-
-function saveRooms() {
-  localStorage.setItem("filetRooms", JSON.stringify(rooms));
-}
-
-function addRoom() {
-  let no = document.getElementById("roomNo").value.trim();
-  let type = document.getElementById("roomType").value;
-  let price = document.getElementById("roomPrice").value;
-
-  if (!no || !price || Number(price) <= 0) {
-    alert("Please enter room number and a valid price.");
-    return;
-  }
-
-  if (rooms.some(room => room.no === no)) {
-    alert("This room number already exists.");
-    return;
-  }
-
-  rooms.push({
-    no: no,
-    type: type,
-    price: Number(price),
-    status: "Available"
-  });
-
-  saveRooms();
-  document.getElementById("roomNo").value = "";
-  document.getElementById("roomPrice").value = "";
-  showRooms();
-}
-
-function showRooms() {
-  let list = document.getElementById("roomList");
-  list.innerHTML = "";
-
-  if (rooms.length === 0) {
-    list.innerHTML = "<p>No rooms added yet.</p>";
-    return;
-  }
-
-  rooms.forEach((room, index) => {
-    list.innerHTML += `
-      <div class="card room">
-        <h3>Room ${room.no}</h3>
-        <p>Type: ${room.type}</p>
-        <p>Price: ${room.price} ETB / night</p>
-        <p><strong>Status: ${room.status}</strong></p>
-        <button onclick="changeStatus(${index})">
-          Change Room Status
-        </button>
-      </div>
-    `;
-  });
-}
-
-function changeStatus(index) {
-  rooms[index].status =
-    rooms[index].status === "Available" ? "Occupied" : "Available";
-
-  saveRooms();
-  showRooms();
-}
-
-function goHome() {
-  alert("Dashboard will be connected in the next step.");
-}
-
-showRooms();
-</script>
-
-
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./service-worker.js")
+          .then(function () {
+            console.log("Service worker registered.");
+          })
+          .catch(function (error) {
+            console.log("Service worker registration failed:", error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>
+  
 
