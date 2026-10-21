@@ -1,163 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FILET HOTEL - Guest Registration</title>
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f1f5f9;
-  margin: 0;
-  padding: 16px;
-  color: #172554;
-}
-
-header {
-  background: #102b4e;
-  color: white;
-  padding: 20px;
-  text-align: center;
-  border-radius: 12px;
-}
-
-.card {
-  background: white;
-  padding: 16px;
-  margin-top: 16px;
-  border-radius: 12px;
-}
-
-label {
-  display: block;
-  margin-top: 12px;
-}
-
-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  margin-top: 6px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  font-size: 16px;
-}
-
-button {
-  width: 100%;
-  background: #102b4e;
-  color: white;
-  border: none;
-  padding: 14px;
-  margin-top: 18px;
-  border-radius: 8px;
-  font-size: 16px;
-}
-
-.guest {
-  border-left: 5px solid #16a34a;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FILET HOTEL - Guest Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 20px;
+      color: #172033;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px #0001;
+    }
+    h1 { color: #075985; text-align: center; }
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin-top: 6px;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+    input, select { border: 1px solid #cbd5e1; }
+    button {
+      border: 0;
+      background: #075985;
+      color: white;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    #message { margin-top: 15px; white-space: pre-wrap; }
+    .note { font-size: 13px; color: #64748b; }
+  </style>
 </head>
-
 <body>
+  <div class="container">
+    <h1>FILET HOTEL</h1>
+    <h2>Guest Registration</h2>
+    <p class="note">Galmee keessummootaa</p>
 
-<header>
-  <h2>FILET HOTEL</h2>
-  <p>Guest Registration</p>
-</header>
+    <form id="guestForm">
+      <label for="full_name">Guest Full Name</label>
+      <input id="full_name" required maxlength="120">
 
-<div class="card">
-  <h3>Register New Guest</h3>
+      <label for="phone">Phone Number</label>
+      <input id="phone" type="tel" maxlength="30">
 
-  <label>Guest Full Name</label>
-  <input id="name" placeholder="Enter guest name">
+      <label for="room_number">Room Number / Lakkoofsa Kutaa</label>
+      <select id="room_number" required>
+        <option value="">Kutaa filadhu</option>
+      </select>
 
-  <label>Phone Number</label>
-  <input id="phone" type="tel" placeholder="Phone number">
+      <p class="note">
+        Kutaaleen tarree kun browser bilbila kana keessatti
+        Bulchiinsa Kutaa irraa kuufaman.
+      </p>
 
-  <label>Room Number</label>
-  <input id="room" placeholder="Example: 101">
+      <label for="checkin_date">Check-in Date</label>
+      <input id="checkin_date" type="date" required>
 
-  <label>Check-in Date</label>
-  <input id="checkin" type="date">
+      <label for="checkout_date">Check-out Date</label>
+      <input id="checkout_date" type="date" required>
 
-  <label>Check-out Date</label>
-  <input id="checkout" type="date">
+      <button id="saveButton" type="submit">Register Guest</button>
+    </form>
 
-  <button onclick="registerGuest()">Register Guest</button>
-</div>
+    <p id="message" role="status"></p>
+  </div>
 
-<h3>Registered Guests</h3>
-<div id="guestList"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL =
+      "https://wyesygvwhlmrefqcridg.supabase.co";
 
-<script>
-let guests = JSON.parse(
-  localStorage.getItem("filetGuests") || "[]"
-);
+    const SUPABASE_PUBLISHABLE_KEY =
+      "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
 
-function registerGuest() {
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const room = document.getElementById("room").value.trim();
-  const checkin = document.getElementById("checkin").value;
-  const checkout = document.getElementById("checkout").value;
+    const form = document.getElementById("guestForm");
+    const message = document.getElementById("message");
+    const saveButton = document.getElementById("saveButton");
+    const roomSelect = document.getElementById("room_number");
 
-  if (!name || !phone || !room || !checkin || !checkout) {
-    alert("Please complete all fields.");
-    return;
-  }
+    function getRooms() {
+      try {
+        return JSON.parse(localStorage.getItem("filetRooms")) || [];
+      } catch (error) {
+        return [];
+      }
+    }
 
-  if (checkout <= checkin) {
-    alert("Check-out must be after check-in.");
-    return;
-  }
+    function loadRooms() {
+      const rooms = getRooms();
+      roomSelect.innerHTML =
+        '<option value="">Kutaa filadhu</option>';
 
-  guests.push({name, phone, room, checkin, checkout});
+      rooms.forEach(function(room) {
+        const option = document.createElement("option");
+        option.value = String(room.no);
 
-  localStorage.setItem("filetGuests", JSON.stringify(guests));
+        const status = room.status || "Available";
+        option.textContent =
+          "Room " + room.no + " - " +
+          (room.type || "Room") + " (" + status + ")";
 
-  showGuests();
-  alert("Guest registered successfully!");
+        if (status !== "Available") {
+          option.disabled = true;
+        }
 
-  document.getElementById("name").value = "";
-  document.getElementById("phone").value = "";
-  document.getElementById("room").value = "";
-  document.getElementById("checkin").value = "";
-  document.getElementById("checkout").value = "";
-}
+        roomSelect.appendChild(option);
+      });
 
-function showGuests() {
-  const list = document.getElementById("guestList");
-  list.innerHTML = "";
+      if (rooms.length === 0) {
+        message.textContent =
+          "Kutaaleen hin argamne. Dura Bulchiinsa Kutaa keessatti kutaa galmeessi.";
+      } else {
+        message.textContent =
+          "Kutaalee jiran keessaa kutaa Available filadhu.";
+      }
+    }
 
-  if (guests.length === 0) {
-    list.textContent = "No guests registered yet.";
-    return;
-  }
+    loadRooms();
 
-  guests.forEach(guest => {
-    const card = document.createElement("div");
-    card.className = "card guest";
+    form.addEventListener("submit", async function(event) {
+      event.preventDefault();
 
-    const details = document.createElement("p");
-    details.textContent =
-      "Name: " + guest.name +
-      " | Phone: " + guest.phone +
-      " | Room: " + guest.room +
-      " | Check-in: " + guest.checkin +
-      " | Check-out: " + guest.checkout;
+      const checkin =
+        document.getElementById("checkin_date").value;
+      const checkout =
+        document.getElementById("checkout_date").value;
 
-    card.appendChild(details);
-    list.appendChild(card);
-  });
-}
+      if (checkout <= checkin) {
+        message.textContent =
+          "Check-out date, check-in date booda ta'uu qaba.";
+        return;
+      }
 
-showGuests();
-</script>
+      if (!window.supabase) {
+        message.textContent =
+          "Internetii ilaali; Supabase library hin banamne.";
+        return;
+      }
 
+      const roomNumber = roomSelect.value;
+      const rooms = getRooms();
+      const selectedRoom = rooms.find(
+        room => String(room.no) === roomNumber
+      );
+
+      if (!selectedRoom || selectedRoom.status !== "Available") {
+        message.textContent =
+          "Kutaan kun hin jiru ykn hin banaa miti. Tarree haaromsi.";
+        loadRooms();
+        return;
+      }
+
+      const guest = {
+        hotel_id: "0be7a002-21fb-4af0-8ac7-7771ba63f609",
+        full_name:
+          document.getElementById("full_name").value.trim(),
+        phone:
+          document.getElementById("phone").value.trim() || null,
+        room_number: roomNumber,
+        checkin_date: checkin,
+        checkout_date: checkout
+      };
+
+      if (!guest.full_name || !guest.room_number) {
+        message.textContent =
+          "Maqaa keessummaa fi lakkoofsa kutaa guuti.";
+        return;
+      }
+
+      saveButton.disabled = true;
+      message.textContent = "Galmeessaa jira...";
+
+      try {
+        const db = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_PUBLISHABLE_KEY
+        );
+
+        const { error } = await db
+          .from("guests")
+          .insert([guest]);
+
+        if (error) throw error;
+
+        const updatedRooms = getRooms().map(function(room) {
+          if (String(room.no) === roomNumber) {
+            return { ...room, status: "Occupied" };
+          }
+          return room;
+        });
+
+        localStorage.setItem(
+          "filetRooms",
+          JSON.stringify(updatedRooms)
+        );
+
+        message.textContent =
+          "Galmeen milkaa'eera! Kutaan " +
+          roomNumber + " Occupied ta'eera.";
+
+        form.reset();
+        loadRooms();
+
+      } catch (error) {
+        console.error(error);
+        message.textContent =
+          "Galmeen hin milkoofne. Supabase connection/RLS ilaali.\n" +
+          (error.message || "Dogoggora hin beekamne.");
+      } finally {
+        saveButton.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
-
-
