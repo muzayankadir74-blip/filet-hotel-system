@@ -1,10 +1,15 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#102b4e">
   <title>FILET HOTEL - Guest Registration</title>
+
   <style>
+    * { box-sizing: border-box; }
+
     body {
       font-family: Arial, sans-serif;
       background: #f1f5f9;
@@ -12,6 +17,7 @@
       padding: 20px;
       color: #172033;
     }
+
     .container {
       max-width: 600px;
       margin: auto;
@@ -20,12 +26,15 @@
       border-radius: 12px;
       box-shadow: 0 3px 12px #0001;
     }
+
     h1 { color: #075985; text-align: center; }
+
     label {
       display: block;
       margin-top: 14px;
       font-weight: bold;
     }
+
     input, select, button {
       width: 100%;
       box-sizing: border-box;
@@ -34,7 +43,9 @@
       border-radius: 7px;
       font-size: 16px;
     }
+
     input, select { border: 1px solid #cbd5e1; }
+
     button {
       border: 0;
       background: #075985;
@@ -42,10 +53,21 @@
       font-weight: bold;
       margin-top: 20px;
     }
-    #message { margin-top: 15px; white-space: pre-wrap; }
-    .note { font-size: 13px; color: #64748b; }
+
+    button:disabled { opacity: 0.6; }
+
+    #message {
+      margin-top: 15px;
+      white-space: pre-wrap;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #64748b;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>FILET HOTEL</h1>
@@ -65,8 +87,7 @@
       </select>
 
       <p class="note">
-        Kutaaleen tarree kun browser bilbila kana keessatti
-        Bulchiinsa Kutaa irraa kuufaman.
+        Kutaalee Available ta'an qofa filachuu dandeessa.
       </p>
 
       <label for="checkin_date">Check-in Date</label>
@@ -82,12 +103,18 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
     const SUPABASE_URL =
       "https://wyesygvwhlmrefqcridg.supabase.co";
 
     const SUPABASE_PUBLISHABLE_KEY =
       "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+
+    const HOTEL_ID =
+      "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+
+    const ROOM_STORAGE_KEY = "filetHotelRooms";
 
     const form = document.getElementById("guestForm");
     const message = document.getElementById("message");
@@ -96,7 +123,10 @@
 
     function getRooms() {
       try {
-        return JSON.parse(localStorage.getItem("filetRooms")) || [];
+        const rooms = JSON.parse(
+          localStorage.getItem(ROOM_STORAGE_KEY) || "[]"
+        );
+        return Array.isArray(rooms) ? rooms : [];
       } catch (error) {
         return [];
       }
@@ -104,32 +134,63 @@
 
     function loadRooms() {
       const rooms = getRooms();
-      roomSelect.innerHTML =
-        '<option value="">Kutaa filadhu</option>';
+      const previousValue = roomSelect.value;
 
-      rooms.forEach(function(room) {
+      roomSelect.replaceChildren();
+
+      const firstOption = document.createElement("option");
+      firstOption.value = "";
+      firstOption.textContent = "Kutaa filadhu";
+      roomSelect.appendChild(firstOption);
+
+      const availableRooms = rooms.filter(function(room) {
+        return room.status === "Available";
+      });
+
+      availableRooms.forEach(function(room) {
         const option = document.createElement("option");
-        option.value = String(room.no);
-
-        const status = room.status || "Available";
+        option.value = String(room.number);
         option.textContent =
-          "Room " + room.no + " - " +
-          (room.type || "Room") + " (" + status + ")";
-
-        if (status !== "Available") {
-          option.disabled = true;
-        }
+          "Room " + room.number + " — " +
+          room.type + " — " + room.price + " ETB";
 
         roomSelect.appendChild(option);
       });
 
-      if (rooms.length === 0) {
+      if (availableRooms.some(function(room) {
+        return String(room.number) === previousValue;
+      })) {
+        roomSelect.value = previousValue;
+      }
+
+      if (availableRooms.length === 0) {
         message.textContent =
-          "Kutaaleen hin argamne. Dura Bulchiinsa Kutaa keessatti kutaa galmeessi.";
+          "Kutaa Available hin jiru. Bulchiinsa Kutaa keessatti kutaa bilisa galmeessi.";
       } else {
         message.textContent =
-          "Kutaalee jiran keessaa kutaa Available filadhu.";
+          "Kutaa bilisa ta'e filadhu.";
       }
+    }
+
+    function markRoomOccupied(roomNumber) {
+      const rooms = getRooms();
+
+      const index = rooms.findIndex(function(room) {
+        return String(room.number) === String(roomNumber);
+      });
+
+      if (index === -1 || rooms[index].status !== "Available") {
+        throw new Error(
+          "Kutaa filatame hin argamne ykn Available miti."
+        );
+      }
+
+      rooms[index].status = "Occupied";
+
+      localStorage.setItem(
+        ROOM_STORAGE_KEY,
+        JSON.stringify(rooms)
+      );
     }
 
     loadRooms();
@@ -139,12 +200,31 @@
 
       const checkin =
         document.getElementById("checkin_date").value;
+
       const checkout =
         document.getElementById("checkout_date").value;
+
+      const roomNumber = roomSelect.value;
 
       if (checkout <= checkin) {
         message.textContent =
           "Check-out date, check-in date booda ta'uu qaba.";
+        return;
+      }
+
+      if (!roomNumber) {
+        message.textContent = "Maaloo kutaa filadhu.";
+        return;
+      }
+
+      const room = getRooms().find(function(item) {
+        return String(item.number) === String(roomNumber);
+      });
+
+      if (!room || room.status !== "Available") {
+        message.textContent =
+          "Kutaan filatame Available miti. Tarree haaromsi.";
+        loadRooms();
         return;
       }
 
@@ -154,33 +234,20 @@
         return;
       }
 
-      const roomNumber = roomSelect.value;
-      const rooms = getRooms();
-      const selectedRoom = rooms.find(
-        room => String(room.no) === roomNumber
-      );
-
-      if (!selectedRoom || selectedRoom.status !== "Available") {
-        message.textContent =
-          "Kutaan kun hin jiru ykn hin banaa miti. Tarree haaromsi.";
-        loadRooms();
-        return;
-      }
-
       const guest = {
-        hotel_id: "0be7a002-21fb-4af0-8ac7-7771ba63f609",
+        hotel_id: HOTEL_ID,
         full_name:
           document.getElementById("full_name").value.trim(),
         phone:
           document.getElementById("phone").value.trim() || null,
-        room_number: roomNumber,
+        room_number: String(roomNumber),
         checkin_date: checkin,
         checkout_date: checkout
       };
 
-      if (!guest.full_name || !guest.room_number) {
+      if (!guest.full_name) {
         message.textContent =
-          "Maqaa keessummaa fi lakkoofsa kutaa guuti.";
+          "Maqaa keessummaa guuti.";
         return;
       }
 
@@ -199,24 +266,22 @@
 
         if (error) throw error;
 
-        const updatedRooms = getRooms().map(function(room) {
-          if (String(room.no) === roomNumber) {
-            return { ...room, status: "Occupied" };
-          }
-          return room;
-        });
+        try {
+          markRoomOccupied(roomNumber);
 
-        localStorage.setItem(
-          "filetRooms",
-          JSON.stringify(updatedRooms)
-        );
+          message.textContent =
+            "Galmeen milkaa'eera! Kutaa " +
+            roomNumber + " gara Occupied jijjiirameera.";
 
-        message.textContent =
-          "Galmeen milkaa'eera! Kutaan " +
-          roomNumber + " Occupied ta'eera.";
+          form.reset();
+          loadRooms();
 
-        form.reset();
-        loadRooms();
+        } catch (roomError) {
+          message.textContent =
+            "Keessummaan Supabase keessatti galmaa'eera, " +
+            "garuu haalli kutaa jijjiiramuu hin dandeenye.\n" +
+            roomError.message;
+        }
 
       } catch (error) {
         console.error(error);
