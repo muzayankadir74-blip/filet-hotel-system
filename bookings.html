@@ -1,132 +1,231 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FILET HOTEL - Bookings</title>
+<title>Yooyyaa Hotel System - Bookings</title>
+
 <style>
-body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#f1f5f9;color:#172554}
-header{background:#102b4e;color:white;padding:20px;text-align:center;border-radius:12px}
-.card{background:white;padding:16px;margin-top:14px;border-radius:12px}
-label{display:block;margin-top:12px}
-input,select{width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px;background:white}
-button{width:100%;padding:13px;margin-top:16px;background:#102b4e;color:white;border:0;border-radius:8px;font-size:16px}
-.booking{border-left:5px solid #2563eb}
-.back{background:#475569}
+body{
+  font-family:Arial,sans-serif;
+  margin:0;
+  padding:16px;
+  background:#f1f5f9;
+  color:#172554;
+}
+header{
+  background:#102b4e;
+  color:white;
+  padding:20px;
+  text-align:center;
+  border-radius:12px;
+}
+.card{
+  background:white;
+  padding:16px;
+  margin-top:14px;
+  border-radius:12px;
+}
+label{
+  display:block;
+  margin-top:12px;
+}
+input,select{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px;
+  margin-top:6px;
+  border:1px solid #cbd5e1;
+  border-radius:7px;
+  font-size:16px;
+  background:white;
+}
+button{
+  width:100%;
+  padding:13px;
+  margin-top:16px;
+  background:#102b4e;
+  color:white;
+  border:0;
+  border-radius:8px;
+  font-size:16px;
+}
+.booking{
+  border-left:5px solid #2563eb;
+}
+.back{
+  background:#475569;
+}
 </style>
 </head>
+
 <body>
+
 <header>
-<h2>FILET HOTEL</h2>
-<p>Room Booking</p>
+  <h2>Yooyyaa Hotel System</h2>
+  <p>Room Booking</p>
 </header>
 
 <div class="card">
-<h3>Create New Booking</h3>
+  <h3>Create New Booking</h3>
 
-<label>Guest Full Name</label>
-<input id="name" placeholder="Guest name">
+  <label>Guest Full Name</label>
+  <input id="name" placeholder="Guest name">
 
-<label>Phone Number</label>
-<input id="phone" type="tel" placeholder="Phone number">
+  <label>Phone Number</label>
+  <input id="phone" type="tel" placeholder="Phone number">
 
-<label>Room Number</label>
-<input id="room" placeholder="Example: 101">
+  <label>Room Number</label>
+  <input id="room" placeholder="Example: 101">
 
-<label>Check-in Date</label>
-<input id="checkin" type="date">
+  <label>Check-in Date</label>
+  <input id="checkin" type="date">
 
-<label>Check-out Date</label>
-<input id="checkout" type="date">
+  <label>Check-out Date</label>
+  <input id="checkout" type="date">
 
-<label>Room Price Per Night (ETB)</label>
-<input id="price" type="number" min="0" placeholder="Example: 1500">
+  <label>Room Price Per Night (ETB)</label>
+  <input id="price" type="number" min="0" placeholder="Example: 1500">
 
-<button onclick="addBooking()">Save Booking</button>
-<button class="back" onclick="location.href='dashboard.html'">Back to Dashboard</button>
+  <button onclick="addBooking()">Save Booking</button>
+  <button class="back" onclick="location.href='dashboard.html'">
+    Back to Dashboard
+  </button>
 </div>
 
 <h3>Booking Records</h3>
 <div id="list"></div>
 
 <script>
-let bookings=JSON.parse(localStorage.getItem("filetBookings")||"[]");
+let bookings = JSON.parse(
+  localStorage.getItem("filetBookings") || "[]"
+);
 
 function addBooking(){
- const name=document.getElementById("name").value.trim();
- const phone=document.getElementById("phone").value.trim();
- const room=document.getElementById("room").value.trim();
- const checkin=document.getElementById("checkin").value;
- const checkout=document.getElementById("checkout").value;
- const price=Number(document.getElementById("price").value);
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const room = document.getElementById("room").value.trim();
+  const checkin = document.getElementById("checkin").value;
+  const checkout = document.getElementById("checkout").value;
+  const priceInput = document.getElementById("price").value;
+  const price = Number(priceInput);
 
- if(!name||!phone||!room||!checkin||!checkout||document.getElementById("price").value===""){
-  alert("Please complete all fields.");
-  return;
- }
- if(checkout<=checkin){alert("Check-out must be after check-in.");return;}
- if(price<0){alert("Price cannot be negative.");return;}
+  if(!name || !phone || !room || !checkin || !checkout || priceInput === ""){
+    alert("Please complete all fields.");
+    return;
+  }
 
- const start=new Date(checkin+"T00:00:00");
- const end=new Date(checkout+"T00:00:00");
- const nights=Math.round((end-start)/86400000);
+  if(checkout <= checkin){
+    alert("Check-out must be after check-in.");
+    return;
+  }
 
- const conflict=bookings.some(b=>
-   b.room===room && b.status!=="Cancelled" &&
-   checkin<b.checkout && checkout>b.checkin
- );
- if(conflict){alert("This room already has a booking for these dates.");return;}
+  if(!Number.isFinite(price) || price < 0){
+    alert("Please enter a valid room price.");
+    return;
+  }
 
- const booking={
-  id:Date.now(),name,phone,room,checkin,checkout,price,
-  nights,total:nights*price,status:"Booked"
- };
- bookings.push(booking);
- localStorage.setItem("filetBookings",JSON.stringify(bookings));
- showBookings();
- alert("Booking saved successfully!");
- document.getElementById("name").value="";
- document.getElementById("phone").value="";
- document.getElementById("room").value="";
- document.getElementById("checkin").value="";
- document.getElementById("checkout").value="";
- document.getElementById("price").value="";
+  const start = new Date(checkin + "T00:00:00");
+  const end = new Date(checkout + "T00:00:00");
+  const nights = Math.round((end - start) / 86400000);
+
+  const conflict = bookings.some(b =>
+    String(b.room) === room &&
+    b.status !== "Cancelled" &&
+    checkin < b.checkout &&
+    checkout > b.checkin
+  );
+
+  if(conflict){
+    alert("This room already has a booking for these dates.");
+    return;
+  }
+
+  const booking = {
+    id: Date.now(),
+    name,
+    phone,
+    room,
+    checkin,
+    checkout,
+    price,
+    nights,
+    total: nights * price,
+    status: "Booked"
+  };
+
+  bookings.push(booking);
+
+  localStorage.setItem(
+    "filetBookings",
+    JSON.stringify(bookings)
+  );
+
+  showBookings();
+  alert("Booking saved successfully!");
+
+  document.getElementById("name").value = "";
+  document.getElementById("phone").value = "";
+  document.getElementById("room").value = "";
+  document.getElementById("checkin").value = "";
+  document.getElementById("checkout").value = "";
+  document.getElementById("price").value = "";
 }
 
 function cancelBooking(id){
- if(!confirm("Cancel this booking?"))return;
- bookings=bookings.map(b=>b.id===id?{...b,status:"Cancelled"}:b);
- localStorage.setItem("filetBookings",JSON.stringify(bookings));
- showBookings();
+  if(!confirm("Cancel this booking?")) return;
+
+  bookings = bookings.map(b =>
+    b.id === id ? {...b, status:"Cancelled"} : b
+  );
+
+  localStorage.setItem(
+    "filetBookings",
+    JSON.stringify(bookings)
+  );
+
+  showBookings();
 }
 
 function showBookings(){
- const list=document.getElementById("list");
- list.innerHTML="";
- if(bookings.length===0){list.textContent="No bookings yet.";return;}
- bookings.slice().reverse().forEach(b=>{
-  const card=document.createElement("div");
-  card.className="card booking";
-  const info=document.createElement("p");
-  info.textContent="Guest: "+b.name+
-   " | Phone: "+b.phone+
-   " | Room: "+b.room+
-   " | Dates: "+b.checkin+" to "+b.checkout+
-   " | Nights: "+b.nights+
-   " | Total: "+b.total.toLocaleString()+" ETB"+
-   " | Status: "+b.status;
-  card.appendChild(info);
-  if(b.status!=="Cancelled"){
-   const btn=document.createElement("button");
-   btn.textContent="Cancel Booking";
-   btn.onclick=()=>cancelBooking(b.id);
-   card.appendChild(btn);
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  if(bookings.length === 0){
+    list.textContent = "No bookings yet.";
+    return;
   }
-  list.appendChild(card);
- });
+
+  bookings.slice().reverse().forEach(b => {
+    const card = document.createElement("div");
+    card.className = "card booking";
+
+    const info = document.createElement("p");
+
+    info.textContent =
+      "Guest: " + b.name +
+      " | Phone: " + b.phone +
+      " | Room: " + b.room +
+      " | Dates: " + b.checkin + " to " + b.checkout +
+      " | Nights: " + b.nights +
+      " | Total: " + Number(b.total).toLocaleString() + " ETB" +
+      " | Status: " + b.status;
+
+    card.appendChild(info);
+
+    if(b.status !== "Cancelled"){
+      const btn = document.createElement("button");
+      btn.textContent = "Cancel Booking";
+      btn.onclick = () => cancelBooking(b.id);
+      card.appendChild(btn);
+    }
+
+    list.appendChild(card);
+  });
 }
+
 showBookings();
 </script>
+
 </body>
 </html>
