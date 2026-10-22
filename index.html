@@ -1,14 +1,10 @@
-
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#102b4e">
-  <meta name="description" content="FILET HOTEL Management System">
-  <title>FILET HOTEL SYSTEM</title>
-
-  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#102c46">
+  <title>Yooyyaa Hotel System</title>
 
   <style>
     * {
@@ -17,161 +13,97 @@
 
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: Arial, sans-serif;
-      background: #eef2f7;
-      color: #102b4e;
+      background: linear-gradient(145deg, #102c46, #1b4965);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
 
-    header {
-      background: #102b4e;
-      color: white;
+    .container {
+      width: 100%;
+      max-width: 430px;
+      background: #fff;
+      color: #17324d;
+      padding: 28px 22px;
+      border-radius: 22px;
       text-align: center;
-      padding: 24px 15px;
+      box-shadow: 0 12px 35px #0003;
     }
 
-    .hotel-logo {
-      display: block;
-      width: 160px;
-      height: 160px;
+    .logo {
+      width: 120px;
+      height: 120px;
       object-fit: contain;
-      margin: 0 auto 12px;
-      background: white;
-      border-radius: 14px;
+      margin-bottom: 10px;
     }
 
-    header h1 {
-      margin: 0 0 8px;
+    h1 {
+      margin: 8px 0;
       font-size: 27px;
+      color: #123b63;
     }
 
-    header p {
-      margin: 0;
-      font-size: 15px;
-    }
-
-    main {
-      max-width: 600px;
-      margin: auto;
-      padding: 18px;
+    .subtitle {
+      margin: 0 0 24px;
+      color: #64748b;
+      font-size: 14px;
     }
 
     .menu {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 13px;
     }
 
     .menu a {
       display: block;
-      background: white;
-      color: #102b4e;
-      text-decoration: none;
-      text-align: center;
-      padding: 22px 8px;
+      padding: 16px;
+      background: #123b63;
+      color: white;
       border-radius: 12px;
-      box-shadow: 0 2px 7px #00000012;
+      text-decoration: none;
+      font-size: 17px;
       font-weight: bold;
-      min-height: 95px;
     }
 
     .menu a:active {
-      background: #dbeafe;
+      background: #d3a64b;
+      color: #102c46;
     }
 
-    .icon {
-      display: block;
-      font-size: 27px;
-      margin-bottom: 9px;
-    }
-
-    .welcome {
-      background: white;
-      padding: 18px;
-      border-radius: 12px;
-      margin-top: 16px;
-      text-align: center;
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
+    .footer {
+      margin-top: 24px;
+      font-size: 12px;
       color: #64748b;
-      font-size: 13px;
     }
   </style>
 </head>
 
 <body>
-  <header>
+  <main class="container">
+
     <img
-      class="hotel-logo"
-      src="./2_20261020_211800_0001.png"
-      alt="FILET HOTEL SYSTEM Logo"
+      class="logo"
+      src="https://raw.githubusercontent.com/muzayankadir74-blip/filet-hotel-system/main/2_20261020_211800_0001.png"
+      alt="Yooyyaa Hotel Logo"
     >
 
-    <h1>FILET HOTEL</h1>
-    <p>Hotel Management System</p>
-  </header>
+    <h1>Yooyyaa Hotel System</h1>
+    <p class="subtitle">Hotel Management System</p>
 
-  <main>
-    <div class="menu">
-      <a href="./dashboard.html">
-        <span class="icon">📊</span>
-        Dashboard
-      </a>
+    <nav class="menu">
+      <a href="dashboard.html">🏨 Dashboard / Bulchiinsa</a>
+      <a href="guest-registration.html">👤 Guest Registration / Keessummaa</a>
+      <a href="room-management.html">🛏️ Room Management / Kutaalee</a>
+      <a href="bookings.html">📅 Bookings / Qabsiisa</a>
+      <a href="payments.html">💳 Payments / Kaffaltii</a>
+    </nav>
 
-      <a href="./guest-registration.html">
-        <span class="icon">👤</span>
-        Guest Registration
-      </a>
+    <p class="footer">© Yooyyaa Hotel System</p>
 
-      <a href="./bookings.html">
-        <span class="icon">📅</span>
-        Bookings
-      </a>
-
-      <a href="./payments.html">
-        <span class="icon">💳</span>
-        Payments
-      </a>
-
-      <a href="./room-management.html">
-        <span class="icon">🛏️</span>
-        Room Management
-      </a>
-
-      <a href="./hotel-profile.html">
-        <span class="icon">🏨</span>
-        Hotel Profile
-      </a>
-    </div>
-
-    <div class="welcome">
-      <h3>Welcome to FILET HOTEL</h3>
-      <p>Manage your hotel operations in one place.</p>
-    </div>
   </main>
-
-  <footer>
-    FILET HOTEL SYSTEM
-  </footer>
-
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function () {
-        navigator.serviceWorker.register("./service-worker.js")
-          .then(function () {
-            console.log("Service worker registered.");
-          })
-          .catch(function (error) {
-            console.log(
-              "Service worker registration failed:",
-              error
-            );
-          });
-      });
-    }
-  </script>
 </body>
 </html>
-
