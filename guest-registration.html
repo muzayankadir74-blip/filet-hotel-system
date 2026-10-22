@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FILET HOTEL SYSTEM - Guest Registration</title>
+  <meta name="theme-color" content="#123b63">
+  <title>Yooyyaa Hotel System - Guest Registration</title>
 
   <style>
     * { box-sizing: border-box; }
@@ -71,6 +72,7 @@
       color: white;
       font-size: 16px;
       font-weight: bold;
+      cursor: pointer;
     }
 
     button:disabled { opacity: 0.6; }
@@ -117,10 +119,10 @@
     <img
       class="logo"
       src="https://raw.githubusercontent.com/muzayankadir74-blip/filet-hotel-system/main/2_20261020_211800_0001.png"
-      alt="FILET HOTEL Logo"
+      alt="Yooyyaa Hotel System Logo"
     >
 
-    <h2>FILET HOTEL SYSTEM</h2>
+    <h2>Yooyyaa Hotel System</h2>
     <p class="subtitle">Guest Registration / Galmee Keessummaa</p>
 
     <form id="guestForm">
@@ -149,20 +151,10 @@
       </select>
 
       <label for="checkin_date">Check-in Date / Guyyaa Seensaa</label>
-      <input
-        type="date"
-        id="checkin_date"
-        name="checkin_date"
-        required
-      >
+      <input type="date" id="checkin_date" name="checkin_date" required>
 
       <label for="checkout_date">Check-out Date / Guyyaa Ba'umsaa</label>
-      <input
-        type="date"
-        id="checkout_date"
-        name="checkout_date"
-        required
-      >
+      <input type="date" id="checkout_date" name="checkout_date" required>
 
       <button type="submit" id="submitBtn">
         Register Guest / Galmeessi
@@ -177,7 +169,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    // SUPABASE CONFIGURATION
     const SUPABASE_URL =
       "https://wyesygvwhlmrefqcridg.supabase.co";
 
@@ -199,8 +190,6 @@
     const messageBox = document.getElementById("message");
     const submitBtn = document.getElementById("submitBtn");
 
-    let rooms = [];
-
     function showMessage(message, type) {
       messageBox.textContent = message;
       messageBox.className = "message " + type;
@@ -211,7 +200,6 @@
         const savedRooms = JSON.parse(
           localStorage.getItem(ROOM_STORAGE_KEY) || "[]"
         );
-
         return Array.isArray(savedRooms) ? savedRooms : [];
       } catch (error) {
         console.error("Could not read rooms:", error);
@@ -220,8 +208,7 @@
     }
 
     function loadAvailableRooms() {
-      rooms = getRooms();
-
+      const rooms = getRooms();
       roomSelect.innerHTML = "";
 
       const firstOption = document.createElement("option");
@@ -241,10 +228,7 @@
         option.value = String(room.number);
 
         let label = "Room " + room.number;
-
-        if (room.type) {
-          label += " - " + room.type;
-        }
+        if (room.type) label += " - " + room.type;
 
         if (room.price !== undefined && room.price !== null) {
           label += " - " + room.price;
@@ -273,9 +257,7 @@
       });
 
       if (index === -1) {
-        throw new Error(
-          "Kutaan kun local storage keessatti hin argamne."
-        );
+        throw new Error("Kutaan kun local storage keessatti hin argamne.");
       }
 
       currentRooms[index].status = "Occupied";
@@ -286,7 +268,6 @@
       );
     }
 
-    // Set today's date as the default check-in date.
     const today = new Date();
     const localToday = [
       today.getFullYear(),
@@ -294,25 +275,21 @@
       String(today.getDate()).padStart(2, "0")
     ].join("-");
 
-    document.getElementById("checkin_date").value = localToday;
-    document.getElementById("checkin_date").min = localToday;
-    document.getElementById("checkout_date").min = localToday;
+    const checkinInput = document.getElementById("checkin_date");
+    const checkoutInput = document.getElementById("checkout_date");
 
-    document.getElementById("checkin_date").addEventListener(
-      "change",
-      function() {
-        const checkin = this.value;
-        const checkoutInput = document.getElementById("checkout_date");
+    checkinInput.value = localToday;
+    checkinInput.min = localToday;
+    checkoutInput.min = localToday;
 
-        checkoutInput.min = checkin;
+    checkinInput.addEventListener("change", function() {
+      checkoutInput.min = this.value;
 
-        if (checkoutInput.value && checkoutInput.value <= checkin) {
-          checkoutInput.value = "";
-        }
+      if (checkoutInput.value && checkoutInput.value <= this.value) {
+        checkoutInput.value = "";
       }
-    );
+    });
 
-    // Load rooms when the page opens.
     loadAvailableRooms();
 
     guestForm.addEventListener("submit", async function(event) {
@@ -329,8 +306,8 @@
       const fullName = document.getElementById("full_name").value.trim();
       const phone = document.getElementById("phone").value.trim();
       const roomNumber = roomSelect.value;
-      const checkinDate = document.getElementById("checkin_date").value;
-      const checkoutDate = document.getElementById("checkout_date").value;
+      const checkinDate = checkinInput.value;
+      const checkoutDate = checkoutInput.value;
 
       if (!roomNumber) {
         showMessage("Maaloo kutaa bilisaa filadhu.", "error");
@@ -345,7 +322,6 @@
         return;
       }
 
-      // Confirm that the selected room is still available.
       const currentRooms = getRooms();
 
       const selectedRoom = currentRooms.find(function(room) {
@@ -358,7 +334,7 @@
         String(selectedRoom.status).trim().toLowerCase() !== "available"
       ) {
         showMessage(
-          "Kutaan filatame amma bilisa miti. Tarree haaromsiitii kutaa biraa filadhu.",
+          "Kutaan filatame amma bilisa miti. Fuula haaromsiitii kutaa biraa filadhu.",
           "error"
         );
         loadAvailableRooms();
@@ -369,7 +345,7 @@
       submitBtn.textContent = "Registering...";
 
       try {
-        const { data, error } = await supabaseClient
+        const { error } = await supabaseClient
           .from("guests")
           .insert([{
             hotel_id: HOTEL_ID,
@@ -378,14 +354,10 @@
             room_number: roomNumber,
             checkin_date: checkinDate,
             checkout_date: checkoutDate
-          }])
-          .select();
+          }]);
 
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
-        // Mark the room occupied after the guest is saved.
         try {
           markRoomOccupied(roomNumber);
         } catch (storageError) {
@@ -397,6 +369,8 @@
           );
 
           guestForm.reset();
+          checkinInput.value = localToday;
+          checkoutInput.min = localToday;
           loadAvailableRooms();
           return;
         }
@@ -408,9 +382,8 @@
         );
 
         guestForm.reset();
-        document.getElementById("checkin_date").value = localToday;
-        document.getElementById("checkout_date").min = localToday;
-
+        checkinInput.value = localToday;
+        checkoutInput.min = localToday;
         loadAvailableRooms();
 
       } catch (error) {
@@ -429,4 +402,4 @@
     });
   </script>
 </body>
-</html>
+  </html>
