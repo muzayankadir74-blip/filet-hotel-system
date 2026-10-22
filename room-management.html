@@ -4,12 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#102b4e">
-  <title>Room Management - FILET HOTEL</title>
+  <title>Yooyyaa Hotel System - Room Management</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -25,9 +23,7 @@
       padding: 20px 12px;
     }
 
-    header h1 {
-      margin: 0 0 8px;
-    }
+    header h1 { margin: 0 0 8px; }
 
     main {
       max-width: 650px;
@@ -93,7 +89,7 @@
 
 <body>
   <header>
-    <h1>🏨 FILET HOTEL</h1>
+    <h1>🏨 Yooyyaa Hotel System</h1>
     <p>Room Management - Bulchiinsa Kutaa</p>
     <a class="back" href="./index.html">← Gara Fuula Jalqabaatti</a>
   </header>
@@ -177,20 +173,22 @@
           room.status === "Available" ? "available" : "occupied";
 
         const select = document.createElement("select");
+
         [
           ["Available", "Bilisa"],
           ["Occupied", "Keessummaan keessa jira"],
           ["Cleaning", "Qulqulleessaa jira"],
           ["Maintenance", "Suphaa barbaada"]
-        ].forEach(function (item) {
+        ].forEach(function(item) {
           const option = document.createElement("option");
           option.value = item[0];
           option.textContent = item[1];
           select.appendChild(option);
         });
+
         select.value = room.status;
 
-        select.addEventListener("change", function () {
+        select.addEventListener("change", function() {
           rooms[index].status = select.value;
           saveRooms();
           renderRooms();
@@ -200,7 +198,8 @@
         remove.type = "button";
         remove.textContent = "Kutaa Haqi";
         remove.style.marginTop = "8px";
-        remove.addEventListener("click", function () {
+
+        remove.addEventListener("click", function() {
           if (confirm("Kutaa kana haquu barbaaddaa?")) {
             rooms.splice(index, 1);
             saveRooms();
@@ -217,7 +216,7 @@
       }
     }
 
-    form.addEventListener("submit", function (event) {
+    form.addEventListener("submit", function(event) {
       event.preventDefault();
 
       const number = document.getElementById("roomNumber").value.trim();
@@ -230,8 +229,8 @@
         return;
       }
 
-      if (rooms.some(function (room) {
-        return room.number.toLowerCase() === number.toLowerCase();
+      if (rooms.some(function(room) {
+        return String(room.number).toLowerCase() === number.toLowerCase();
       })) {
         alert("Lakkoofsi kutaa kun duraan galmaa'eera.");
         return;
@@ -241,10 +240,10 @@
       saveRooms();
       renderRooms();
       form.reset();
-      alert("Kutaan bilisummaa bilbilaa kana irratti galmaa'eera.");
+      alert("Kutaan haaraan galmaa'eera.");
     });
 
     renderRooms();
   </script>
 </body>
-</html>
+        </html>
