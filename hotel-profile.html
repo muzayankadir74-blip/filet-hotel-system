@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FILET HOTEL SYSTEM</title>
+<title>Yooyyaa Hotel System - Hotel Profile</title>
+
 <style>
 *{box-sizing:border-box}
 body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:16px;color:#172554}
@@ -15,11 +15,14 @@ input,textarea{width:100%;padding:12px;margin-top:6px;border:1px solid #cbd5e1;b
 button{width:100%;padding:13px;margin-top:16px;background:#087f5b;color:white;border:0;border-radius:8px;font-size:16px;font-weight:bold}
 #logoPreview{max-width:120px;max-height:120px;display:block;margin:12px auto}
 #message{color:#087f5b;text-align:center;font-weight:bold}
+.back{background:#475569}
 </style>
 </head>
+
 <body>
+
 <header>
-<h1>FILET HOTEL SYSTEM</h1>
+<h1>Yooyyaa Hotel System</h1>
 <p>Hotel Profile — Odeeffannoo Hoteelaa</p>
 </header>
 
@@ -46,6 +49,10 @@ button{width:100%;padding:13px;margin-top:16px;background:#087f5b;color:white;bo
 <button type="submit">Save Hotel Profile</button>
 <p id="message"></p>
 </form>
+
+<button class="back" type="button" onclick="location.href='dashboard.html'">
+Back to Dashboard
+</button>
 </main>
 
 <script>
@@ -54,15 +61,23 @@ const logoInput = document.getElementById("logo");
 const logoPreview = document.getElementById("logoPreview");
 const message = document.getElementById("message");
 
+const hotelNameInput = document.getElementById("hotelName");
+const phoneInput = document.getElementById("phone");
+const emailInput = document.getElementById("email");
+const addressInput = document.getElementById("address");
+
 let logoData = "";
 
 function loadProfile() {
   try {
-    const saved = JSON.parse(localStorage.getItem("filetHotelProfile") || "{}");
-    hotelName.value = saved.hotelName || "";
-    phone.value = saved.phone || "";
-    email.value = saved.email || "";
-    address.value = saved.address || "";
+    const saved = JSON.parse(
+      localStorage.getItem("filetHotelProfile") || "{}"
+    );
+
+    hotelNameInput.value = saved.hotelName || "";
+    phoneInput.value = saved.phone || "";
+    emailInput.value = saved.email || "";
+    addressInput.value = saved.address || "";
     logoData = saved.logo || "";
 
     if (logoData) {
@@ -85,11 +100,13 @@ logoInput.addEventListener("change", function() {
   }
 
   const reader = new FileReader();
+
   reader.onload = function() {
     logoData = reader.result;
     logoPreview.src = logoData;
     logoPreview.hidden = false;
   };
+
   reader.readAsDataURL(file);
 });
 
@@ -97,15 +114,19 @@ form.addEventListener("submit", function(event) {
   event.preventDefault();
 
   const profile = {
-    hotelName: hotelName.value.trim(),
-    phone: phone.value.trim(),
-    email: email.value.trim(),
-    address: address.value.trim(),
+    hotelName: hotelNameInput.value.trim(),
+    phone: phoneInput.value.trim(),
+    email: emailInput.value.trim(),
+    address: addressInput.value.trim(),
     logo: logoData
   };
 
   try {
-    localStorage.setItem("filetHotelProfile", JSON.stringify(profile));
+    localStorage.setItem(
+      "filetHotelProfile",
+      JSON.stringify(profile)
+    );
+
     message.textContent = "Odeeffannoon hoteelaa kuufameera!";
   } catch (error) {
     message.textContent = "Kuusuun hin milkoofne. Logo xiqqeessi.";
@@ -114,5 +135,6 @@ form.addEventListener("submit", function(event) {
 
 loadProfile();
 </script>
+
 </body>
 </html>
