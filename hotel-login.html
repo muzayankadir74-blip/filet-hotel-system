@@ -25,11 +25,11 @@ input{
   border:1px solid #cbd5e1;border-radius:8px;font-size:16px
 }
 button{
-  width:100%;padding:13px;margin-top:22px;background:#087f5b;
+  width:100%;padding:13px;margin-top:16px;background:#087f5b;
   color:white;border:0;border-radius:8px;font-size:16px;font-weight:bold
 }
 button:disabled{opacity:.6}
-#message{margin-top:16px;text-align:center;line-height:1.5}
+#message{margin-top:16px;text-align:center;line-height:1.5;overflow-wrap:anywhere}
 .back{text-align:center;margin-top:20px}
 a{color:#087f5b}
 .notice{font-size:13px;color:#64748b;line-height:1.5}
@@ -38,7 +38,7 @@ a{color:#087f5b}
 <body>
 <div class="login-box">
   <h1>🏨 Yooyyaa Hotel System</h1>
-  <p class="subtitle">Owner & Staff Login</p>
+  <p class="subtitle">Owner &amp; Staff Login</p>
 
   <form id="loginForm">
     <label for="email">Email</label>
@@ -53,6 +53,11 @@ a{color:#087f5b}
 
     <button id="loginButton" type="submit">Login</button>
   </form>
+
+  <button id="resetButton" type="button"
+    style="background:#12345a">
+    Forgot Password?
+  </button>
 
   <p id="message" role="status" aria-live="polite"></p>
 
@@ -70,56 +75,99 @@ a{color:#087f5b}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "https://wyesygvwhlmrefqcridg.supabase.co";
+const SUPABASE_URL =
+  "https://wyesygvwhlmrefqcridg.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
 
 const message = document.getElementById("message");
-const button = document.getElementById("loginButton");
+const loginButton = document.getElementById("loginButton");
+const resetButton = document.getElementById("resetButton");
+const loginForm = document.getElementById("loginForm");
+const emailInput = document.getElementById("email");
+
+let client = null;
 
 if (!window.supabase) {
   message.textContent =
-    "Login library hin banamne. Internet kee mirkaneessi, fuula haaromsi.";
+    "Supabase library hin banamne. Internet ilaaliitii fuula haaromsi.";
+  loginButton.disabled = true;
+  resetButton.disabled = true;
 } else {
-  const client = window.supabase.createClient(
+  client = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY
   );
 
-  document.getElementById("loginForm").addEventListener("submit",
-    async function(event) {
-      event.preventDefault();
-      message.textContent = "";
-      button.disabled = true;
-      button.textContent = "Signing in...";
+  loginForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    message.textContent = "";
+    loginButton.disabled = true;
+    resetButton.disabled = true;
+    loginButton.textContent = "Signing in...";
 
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+    try {
+      const { data, error } = await client.auth.signInWithPassword({
+        email: emailInput.value.trim(),
+        password: document.getElementById("password").value
+      });
 
-      try {
-        const { data, error } = await client.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
+      if (error) throw error;
 
-        if (error) throw error;
-
-        if (data.session) {
-          message.textContent = "Login milkaa'e. Dashboard banamaa jira...";
-          window.location.href = "dashboard.html";
-        } else {
-          message.textContent =
-            "Session hin argamne. Email mirkaneessuu kee ilaali.";
-        }
-      } catch (error) {
-        message.textContent =
-          "Login hin milkoofne. Email, password fi email mirkaneessuu kee ilaali.";
-      } finally {
-        button.disabled = false;
-        button.textContent = "Login";
+      if (data.session) {
+        message.textContent = "Login milkaa'e. Dashboard banamaa jira...";
+        window.location.href = "dashboard.html";
+        return;
       }
+
+      message.textContent =
+        "Session hin argamne. Email mirkaneessuu kee ilaali.";
+    } catch (error) {
+      console.error("Supabase login error:", error);
+      message.textContent = "Login hin milkoofne: " +
+        (error.message || "Dogoggora hin beekamne.");
+    } finally {
+      loginButton.disabled = false;
+      resetButton.disabled = false;
+      loginButton.textContent = "Login";
     }
-  );
+  });
+
+  resetButton.addEventListener("click", async function() {
+    const email = emailInput.value.trim();
+
+    if (!email) {
+      message.textContent =
+        "Jalqaba kutaa Email keessatti email kee galchi.";
+      emailInput.focus();
+      return;
+    }
+
+    resetButton.disabled = true;
+    loginButton.disabled = true;
+    resetButton.textContent = "Sending...";
+
+    try {
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo:
+          "https://muzayankadir74-blip.github.io/filet-hotel-system/hotel-login.html"
+      });
+
+      if (error) throw error;
+
+      message.textContent =
+        "Yoo email kun account Supabase keessatti jiraate, email password reset ergameera. Inbox fi Spam ilaali.";
+    } catch (error) {
+      console.error("Password reset error:", error);
+      message.textContent =
+        "Password reset hin milkoofne: " +
+        (error.message || "Dogoggora hin beekamne.");
+    } finally {
+      resetButton.disabled = false;
+      loginButton.disabled = false;
+      resetButton.textContent = "Forgot Password?";
+    }
+  });
 }
 </script>
 </body>
