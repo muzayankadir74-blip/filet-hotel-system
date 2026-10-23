@@ -9,92 +9,118 @@
 <style>
 *{box-sizing:border-box}
 body{
-  margin:0;
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  font-family:Arial,sans-serif;
-  background:#eef2f7;
-  color:#12345a;
+  margin:0;min-height:100vh;display:flex;align-items:center;
+  justify-content:center;padding:20px;font-family:Arial,sans-serif;
+  background:#eef2f7;color:#12345a
 }
 .login-box{
-  background:white;
-  width:100%;
-  max-width:400px;
-  padding:26px;
-  border-radius:16px;
-  box-shadow:0 5px 24px #0002;
+  background:white;width:100%;max-width:400px;padding:26px;
+  border-radius:16px;box-shadow:0 5px 24px #0002
 }
 h1{text-align:center;font-size:24px}
 .subtitle{text-align:center;color:#64748b}
 label{display:block;margin-top:18px;font-weight:bold}
 input{
-  width:100%;
-  padding:13px;
-  margin-top:7px;
-  border:1px solid #cbd5e1;
-  border-radius:8px;
-  font-size:16px;
+  width:100%;padding:13px;margin-top:7px;
+  border:1px solid #cbd5e1;border-radius:8px;font-size:16px
 }
 button{
-  width:100%;
-  padding:13px;
-  margin-top:22px;
-  background:#087f5b;
-  color:white;
-  border:0;
-  border-radius:8px;
-  font-size:16px;
-  font-weight:bold;
+  width:100%;padding:13px;margin-top:22px;background:#087f5b;
+  color:white;border:0;border-radius:8px;font-size:16px;font-weight:bold
 }
-#message{margin-top:16px;text-align:center}
+button:disabled{opacity:.6}
+#message{margin-top:16px;text-align:center;line-height:1.5}
 .back{text-align:center;margin-top:20px}
 a{color:#087f5b}
 .notice{font-size:13px;color:#64748b;line-height:1.5}
 </style>
 </head>
-
 <body>
 <div class="login-box">
   <h1>🏨 Yooyyaa Hotel System</h1>
-  <p class="subtitle">Hotel Staff Login</p>
+  <p class="subtitle">Owner & Staff Login</p>
 
   <form id="loginForm">
-    <label for="username">Username</label>
-    <input id="username" name="username"
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email"
       autocomplete="username" required
-      placeholder="Enter your username">
+      placeholder="Enter your registered email">
 
     <label for="password">Password</label>
-    <input id="password" name="password"
-      type="password" autocomplete="current-password"
-      required placeholder="Enter your password">
+    <input id="password" name="password" type="password"
+      autocomplete="current-password" required
+      placeholder="Enter your password">
 
-    <button type="submit">Login</button>
+    <button id="loginButton" type="submit">Login</button>
   </form>
 
-  <p id="message" role="status"></p>
+  <p id="message" role="status" aria-live="polite"></p>
 
   <p class="notice">
-    Kun fuula login yaalii qofa. Hanga server fi database
-    nageenya qabu itti hin daballetti username fi password
-    dhugaa hin galchin.
+    Sign in with the email and password registered in Supabase.
+    Do not share your password with anyone.
   </p>
 
   <div class="back">
-    <a href="dashboard.html">Back to Dashboard</a>
+    <a href="index.html">Back to Home</a>
+    <br><br>
+    <a href="dashboard.html">Dashboard</a>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-document.getElementById("loginForm").addEventListener("submit", function(event) {
-  event.preventDefault();
+const SUPABASE_URL = "https://wyesygvwhlmrefqcridg.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
 
-  document.getElementById("message").textContent =
-    "Login server nageenya qabu itti dabaluun barbaachisa.";
-});
+const message = document.getElementById("message");
+const button = document.getElementById("loginButton");
+
+if (!window.supabase) {
+  message.textContent =
+    "Login library hin banamne. Internet kee mirkaneessi, fuula haaromsi.";
+} else {
+  const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+  document.getElementById("loginForm").addEventListener("submit",
+    async function(event) {
+      event.preventDefault();
+      message.textContent = "";
+      button.disabled = true;
+      button.textContent = "Signing in...";
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const { data, error } = await client.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) throw error;
+
+        if (data.session) {
+          message.textContent = "Login milkaa'e. Dashboard banamaa jira...";
+          window.location.href = "dashboard.html";
+        } else {
+          message.textContent =
+            "Session hin argamne. Email mirkaneessuu kee ilaali.";
+        }
+      } catch (error) {
+        message.textContent =
+          "Login hin milkoofne. Email, password fi email mirkaneessuu kee ilaali.";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Login";
+      }
+    }
+  );
+}
 </script>
 </body>
 </html>
