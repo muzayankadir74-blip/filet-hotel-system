@@ -8,54 +8,260 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#172554}
-header{background:#12345a;color:white;padding:25px 16px;text-align:center}
-main{max-width:650px;margin:20px auto;padding:16px}
-.welcome,.menu a{background:white;padding:18px;border-radius:12px}
-.menu{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
-.menu a{text-align:center;text-decoration:none;color:#12345a;font-weight:bold}
-.menu span{display:block;font-size:28px;margin-bottom:8px}
-.profile{margin-top:20px;padding:20px;border-radius:12px;text-align:center;color:white}
-.hotel{background:#12345a}
-.login{background:#0f766e}
-.profile a{display:inline-block;background:white;color:#12345a;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold}
-footer{text-align:center;padding:20px;color:#64748b}
+:root{
+  --navy:#12345a;
+  --blue:#2563eb;
+  --green:#0f766e;
+  --bg:#f1f5f9;
+  --white:#fff;
+  --text:#172554;
+  --muted:#64748b;
+}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header{
+  background:linear-gradient(135deg,#12345a,#1d4ed8);
+  color:white;
+  padding:25px 18px;
+}
+.header-inner,main{
+  width:100%;
+  max-width:1000px;
+  margin:auto;
+}
+header h1{margin:0;font-size:26px}
+header p{margin:8px 0 0;color:#dbeafe}
+main{padding:18px}
+.welcome{
+  background:white;
+  padding:20px;
+  border-radius:16px;
+  box-shadow:0 3px 12px #0f172a0b;
+}
+.welcome h2{margin:0 0 8px}
+.welcome p{margin:0;color:var(--muted);line-height:1.6}
+.section-title{margin:25px 0 12px;font-size:19px}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.stat{
+  background:white;
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 3px 12px #0f172a0b;
+  border-left:4px solid var(--blue);
+}
+.stat .icon{font-size:26px}
+.stat .label{font-size:13px;color:var(--muted);margin-top:8px}
+.stat .number{font-size:27px;font-weight:bold;margin-top:5px;overflow-wrap:anywhere}
+.stat small{display:block;color:var(--muted);margin-top:5px}
+.menu{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.menu a{
+  background:white;
+  padding:18px 10px;
+  border-radius:14px;
+  text-align:center;
+  text-decoration:none;
+  color:var(--navy);
+  font-weight:bold;
+  box-shadow:0 3px 12px #0f172a0b;
+  transition:transform .15s;
+}
+.menu a:active{transform:scale(.97)}
+.menu span{display:block;font-size:29px;margin-bottom:9px}
+.profile{
+  margin-top:16px;
+  padding:20px;
+  border-radius:15px;
+  color:white;
+}
+.profile h2{margin-top:0}
+.profile p{line-height:1.6}
+.hotel{background:var(--navy)}
+.login{background:var(--green)}
+.profile a{
+  display:inline-block;
+  background:white;
+  color:var(--navy);
+  padding:12px 16px;
+  border-radius:9px;
+  text-decoration:none;
+  font-weight:bold;
+}
+.note{
+  margin-top:16px;
+  padding:13px;
+  background:#e0f2fe;
+  border-radius:10px;
+  color:#075985;
+  font-size:13px;
+  line-height:1.5;
+}
+footer{
+  text-align:center;
+  padding:24px 12px;
+  color:var(--muted);
+  font-size:13px;
+}
+@media(min-width:650px){
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .menu{grid-template-columns:repeat(3,minmax(0,1fr))}
+  main{padding:25px 20px}
+}
 </style>
 </head>
 
 <body>
 <header>
-<h1>Yooyyaa Hotel System</h1>
-<p>Hotel Management Dashboard</p>
+  <div class="header-inner">
+    <h1>🏨 Yooyyaa Hotel System</h1>
+    <p>Hotel Management Dashboard</p>
+  </div>
 </header>
 
 <main>
-<section class="welcome">
-<h2>Baga Nagaan Dhuftan!</h2>
-<p>Sirna bulchiinsa hoteelaa kee keessaa fuula barbaaddu filadhu.</p>
-</section>
+  <section class="welcome">
+    <h2>Baga Nagaan Dhuftan!</h2>
+    <p>Sirna bulchiinsa hoteelaa kee keessaa fuula barbaaddu filadhu.</p>
+  </section>
 
-<section class="menu">
-<a href="room-management.html"><span>🛏️</span>Room Management</a>
-<a href="guest-registration.html"><span>👤</span>Guest Registration</a>
-<a href="bookings.html"><span>📅</span>Bookings</a>
-<a href="payments.html"><span>💳</span>Payments</a>
-<a href="guests.html"><span>📋</span>Guest Records</a>
-</section>
+  <h2 class="section-title">📊 Hotel Overview</h2>
 
-<section class="profile hotel">
-<h2>🏨 Hotel Profile</h2>
-<p>Maqaa, bilbila, email fi teessoo hoteelaa galmeessi.</p>
-<a href="hotel-profile.html">Open Hotel Profile</a>
-</section>
+  <section class="stats">
+    <div class="stat">
+      <div class="icon">🛏️</div>
+      <div class="label">Total Rooms</div>
+      <div class="number" id="totalRooms">0</div>
+      <small>Kutaalee hoteelaa</small>
+    </div>
 
-<section class="profile login">
-<h2>🔐 Hotel Login</h2>
-<p>Username fi password keessaniin seenuuf.</p>
-<a href="hotel-login.html">Open Hotel Login</a>
-</section>
+    <div class="stat">
+      <div class="icon">🟢</div>
+      <div class="label">Available Rooms</div>
+      <div class="number" id="availableRooms">0</div>
+      <small>Kutaalee bilisa ta'an</small>
+    </div>
+
+    <div class="stat">
+      <div class="icon">🔴</div>
+      <div class="label">Occupied Rooms</div>
+      <div class="number" id="occupiedRooms">0</div>
+      <small>Kutaalee qabaman</small>
+    </div>
+
+    <div class="stat">
+      <div class="icon">👥</div>
+      <div class="label">Registered Guests</div>
+      <div class="number" id="registeredGuests">--</div>
+      <small>Galmee keessummootaa</small>
+    </div>
+
+    <div class="stat">
+      <div class="icon">📅</div>
+      <div class="label">Bookings</div>
+      <div class="number" id="totalBookings">0</div>
+      <small>Bookingwwan kuufaman</small>
+    </div>
+
+    <div class="stat">
+      <div class="icon">💳</div>
+      <div class="label">Total Payments</div>
+      <div class="number" id="totalPayments">0</div>
+      <small>Birrii kaffaltii galmaa'e</small>
+    </div>
+  </section>
+
+  <h2 class="section-title">⚡ Quick Access</h2>
+
+  <section class="menu">
+    <a href="room-management.html"><span>🛏️</span>Room Management</a>
+    <a href="guest-registration.html"><span>👤</span>Guest Registration</a>
+    <a href="guests.html"><span>📋</span>Guest Records</a>
+    <a href="bookings.html"><span>📅</span>Bookings</a>
+    <a href="payments.html"><span>💳</span>Payments</a>
+    <a href="hotel-profile.html"><span>🏨</span>Hotel Profile</a>
+  </section>
+
+  <section class="profile hotel">
+    <h2>🏨 Hotel Profile</h2>
+    <p>Maqaa, bilbila, email fi teessoo hoteelaa kee bulchi.</p>
+    <a href="hotel-profile.html">Open Hotel Profile</a>
+  </section>
+
+  <section class="profile login">
+    <h2>🔐 Hotel Login</h2>
+    <p>Fuula seensa abbaa hoteelaa fi hojjettootaa.</p>
+    <a href="hotel-login.html">Open Hotel Login</a>
+  </section>
+
+  <div class="note">
+    <strong>Hubachiisa:</strong> Lakkoofsi kutaa, booking fi kaffaltii browser kana keessatti kuufame irraa shallagama. Odeeffannoon keessummootaa Supabase irraa ofumaan hin lakkaa'amu hanga walitti hidhamiinsi isaa itti dabalamutti. Odeeffannoon browser gara bilbila biraatti ofumaan hin darbu.
+  </div>
 </main>
 
 <footer>Yooyyaa Hotel System © 2026</footer>
+
+<script>
+function readStoredArray(key){
+  try{
+    const data = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(data) ? data : [];
+  }catch(error){
+    return [];
+  }
+}
+
+function updateDashboard(){
+  const rooms = readStoredArray("filetHotelRooms");
+  const bookings = readStoredArray("filetBookings");
+  const payments = readStoredArray("filetPayments");
+
+  const available = rooms.filter(room =>
+    String(room.status || "").toLowerCase().includes("available") ||
+    String(room.status || "").toLowerCase().includes("free") ||
+    String(room.status || "").toLowerCase().includes("bilisa")
+  ).length;
+
+  const occupied = rooms.filter(room =>
+    String(room.status || "").toLowerCase().includes("occupied") ||
+    String(room.status || "").toLowerCase().includes("booked") ||
+    String(room.status || "").toLowerCase().includes("qabame")
+  ).length;
+
+  document.getElementById("totalRooms").textContent = rooms.length;
+  document.getElementById("availableRooms").textContent = available;
+  document.getElementById("occupiedRooms").textContent = occupied;
+  document.getElementById("totalBookings").textContent = bookings.length;
+
+  let paymentTotal = 0;
+  payments.forEach(payment => {
+    const amount = Number(
+      payment.amount ?? payment.total ?? payment.paymentAmount ?? 0
+    );
+    if(Number.isFinite(amount)) paymentTotal += amount;
+  });
+
+  document.getElementById("totalPayments").textContent =
+    paymentTotal.toLocaleString("en-US",{maximumFractionDigits:2}) + " ETB";
+
+  // Guest count is not guessed from localStorage.
+  // It requires reading the guests table from Supabase.
+  document.getElementById("registeredGuests").textContent = "--";
+}
+
+updateDashboard();
+
+window.addEventListener("pageshow", updateDashboard);
+</script>
 </body>
-</html>
+  </html>
