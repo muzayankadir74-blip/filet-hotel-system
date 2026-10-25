@@ -3,7 +3,7 @@
 <html lang="om">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#12345a">
   <title>Yooyyaa Hotel System - Login</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -22,14 +22,14 @@
     .card {
       width: 100%;
       max-width: 420px;
-      background: white;
       padding: 26px;
+      background: white;
       border-radius: 16px;
       box-shadow: 0 10px 30px #0003;
     }
-    h1 { text-align: center; color: #12345a; margin: 0 0 8px; }
-    .subtitle { text-align: center; color: #64748b; margin-bottom: 24px; }
-    label { display: block; font-weight: bold; margin: 14px 0 7px; }
+    h1 { text-align: center; color: #12345a; }
+    .subtitle { text-align: center; color: #64748b; }
+    label { display: block; font-weight: bold; margin: 16px 0 7px; }
     input {
       width: 100%;
       padding: 13px;
@@ -47,7 +47,6 @@
       color: white;
       font-size: 16px;
       font-weight: bold;
-      cursor: pointer;
     }
     button:disabled { opacity: .6; }
     .link {
@@ -58,14 +57,8 @@
       text-decoration: underline;
       cursor: pointer;
     }
-    #message {
-      margin-top: 16px;
-      text-align: center;
-      line-height: 1.5;
-      overflow-wrap: anywhere;
-    }
+    #message { margin-top: 16px; overflow-wrap: anywhere; line-height: 1.5; }
     .hidden { display: none !important; }
-    .small { color: #64748b; text-align: center; font-size: 13px; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -90,7 +83,6 @@
 
     <section id="resetSection" class="hidden">
       <h3>Password haaromsuu</h3>
-      <p>Email kee galchi; link haaromsuu siif ergina.</p>
       <form id="resetForm">
         <label for="resetEmail">Email</label>
         <input id="resetEmail" type="email" required placeholder="Email kee">
@@ -114,8 +106,10 @@
       </form>
     </section>
 
-    <div id="message" role="status" aria-live="polite"></div>
-    <p class="small">Yooyyaa Hotel System © 2026</p>
+    <p id="message" role="status" aria-live="polite"></p>
+    <p style="text-align:center;color:#64748b;font-size:13px">
+      Yooyyaa Hotel System © 2026
+    </p>
   </main>
 
 <script>
@@ -144,7 +138,6 @@
     el("resetEmail").value = el("email").value.trim();
     show("resetSection");
   };
-
   el("backLink").onclick = () => show("loginSection");
 
   el("loginForm").onsubmit = async event => {
@@ -160,7 +153,7 @@
       });
       if (error) throw error;
       if (!data.session) throw new Error("Session hin uumamne.");
-      window.location.replace(DASHBOARD_URL);
+      window.location.href = DASHBOARD_URL;
     } catch (error) {
       message("Login hin milkoofne: " + error.message, true);
     } finally {
@@ -171,22 +164,15 @@
 
   el("resetForm").onsubmit = async event => {
     event.preventDefault();
-    const btn = el("resetBtn");
-    btn.disabled = true;
-    btn.textContent = "Ergaa jira...";
-
     try {
       const { error } = await client.auth.resetPasswordForEmail(
         el("resetEmail").value.trim(),
         { redirectTo: LOGIN_URL }
       );
       if (error) throw error;
-      message("Yoo email kun account Supabase keessatti jiraate, link haaromsuu siif ergama. Inbox fi Spam ilaali.");
+      message("Yoo email kun account keessa jiraate, link haaromsuu siif ergama. Inbox fi Spam ilaali.");
     } catch (error) {
       message("Link erguun hin milkoofne: " + error.message, true);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Reset Link Ergi";
     }
   };
 
@@ -195,11 +181,8 @@
     const query = new URLSearchParams(location.search);
 
     if (hash.get("error") || query.get("error")) {
-      message(
-        hash.get("error_description") || query.get("error_description") ||
-        "Link recovery sirrii miti ykn yeroo isaa darbe. Link haaraa gaafadhu.",
-        true
-      );
+      message(hash.get("error_description") || query.get("error_description") ||
+        "Link recovery sirrii miti. Link haaraa gaafadhu.", true);
       return;
     }
 
@@ -207,7 +190,7 @@
     if (code) {
       const { error } = await client.auth.exchangeCodeForSession(code);
       if (error) {
-        message("Link recovery hin hojjenne. Link haaraa gaafadhu: " + error.message, true);
+        message("Link recovery hin hojjenne: " + error.message, true);
         return;
       }
       history.replaceState({}, document.title, location.pathname);
@@ -215,15 +198,13 @@
       return;
     }
 
-    const type = hash.get("type") || query.get("type");
-    if (type === "recovery") {
-      const accessToken = hash.get("access_token");
-      const refreshToken = hash.get("refresh_token");
-
-      if (accessToken && refreshToken) {
+    if ((hash.get("type") || query.get("type")) === "recovery") {
+      const access = hash.get("access_token");
+      const refresh = hash.get("refresh_token");
+      if (access && refresh) {
         const { error } = await client.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
+          access_token: access,
+          refresh_token: refresh
         });
         if (error) {
           message("Session recovery hin milkoofne: " + error.message, true);
@@ -234,33 +215,26 @@
       return;
     }
 
-    try {
-      const { data, error } = await client.auth.getSession();
-      if (error) throw error;
-      if (data.session) window.location.replace(DASHBOARD_URL);
-    } catch (error) {
-      message("Fuula banachuun hin milkoofne: " + error.message, true);
+    const { data, error } = await client.auth.getSession();
+    if (!error && data.session) {
+      window.location.href = DASHBOARD_URL;
     }
   }
 
   el("newPasswordForm").onsubmit = async event => {
     event.preventDefault();
     const password = el("newPassword").value;
-    const confirm = el("confirmPassword").value;
-
     if (password.length < 8) {
       message("Password yoo xiqqaate qubee 8 qabaachuu qaba.", true);
       return;
     }
-    if (password !== confirm) {
+    if (password !== el("confirmPassword").value) {
       message("Password lamaan wal hin fakkaatan.", true);
       return;
     }
 
     const btn = el("saveBtn");
     btn.disabled = true;
-    btn.textContent = "Olkaa'aa jira...";
-
     try {
       const { error } = await client.auth.updateUser({ password });
       if (error) throw error;
@@ -268,12 +242,11 @@
       history.replaceState({}, document.title, location.pathname);
       el("newPasswordForm").reset();
       show("loginSection");
-      message("Password haaraan olkaa'ameera. Amma email fi password haaraa fayyadami.");
+      message("Password haaraan olkaa'ameera. Amma login godhi.");
     } catch (error) {
       message("Password jijjiiruun hin milkoofne: " + error.message, true);
     } finally {
       btn.disabled = false;
-      btn.textContent = "Password Olkaa'i";
     }
   };
 
