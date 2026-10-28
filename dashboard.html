@@ -309,4 +309,315 @@ footer{text-align:center;padding:24px 12px;color:var(--muted);font-size:13px}
 })();
 </script>
 </body>
+</html><!DOCTYPE html>
+<html lang="om">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#12345a">
+<title>Yooyyaa Hotel System - Dashboard</title>
+
+<style>
+*{box-sizing:border-box}
+:root{
+  --navy:#12345a;--blue:#2563eb;--green:#0f766e;
+  --bg:#f1f5f9;--white:#fff;--text:#172554;--muted:#64748b;
+}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(135deg,#12345a,#1d4ed8);color:white;padding:22px 18px}
+.header-inner,main{width:100%;max-width:1000px;margin:auto}
+.header-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:24px}
+header p{margin:8px 0 0;color:#dbeafe}
+button{border:0;border-radius:9px;padding:12px 16px;font-weight:bold;cursor:pointer}
+#logoutBtn{background:white;color:#12345a}
+main{padding:18px}
+.welcome,.stat,.menu a{background:white;border-radius:14px;box-shadow:0 3px 12px #0f172a0b}
+.welcome{padding:20px}
+.welcome h2{margin:0 0 8px}
+.welcome p{margin:0;color:var(--muted);line-height:1.6}
+.section-title{margin:25px 0 12px;font-size:19px}
+.stats,.menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stat{padding:16px;border-left:4px solid var(--blue)}
+.stat .icon{font-size:26px}
+.stat .label{font-size:13px;color:var(--muted);margin-top:8px}
+.stat .number{font-size:25px;font-weight:bold;margin-top:5px;overflow-wrap:anywhere}
+.stat small{display:block;color:var(--muted);margin-top:5px}
+.menu a{padding:18px 10px;text-align:center;text-decoration:none;color:var(--navy);font-weight:bold}
+.menu a:active{transform:scale(.97)}
+.menu span{display:block;font-size:29px;margin-bottom:9px}
+.profile{margin-top:16px;padding:20px;border-radius:15px;color:white}
+.profile h2{margin-top:0}
+.profile p{line-height:1.6}
+.hotel{background:var(--navy)}
+.profile a{display:inline-block;background:white;color:var(--navy);padding:12px 16px;border-radius:9px;text-decoration:none;font-weight:bold}
+.note{margin-top:16px;padding:13px;background:#e0f2fe;border-radius:10px;color:#075985;font-size:13px;line-height:1.5}
+#status{padding:12px;margin:12px 0;border-radius:8px;background:#e0f2fe;color:#075985;line-height:1.5}
+footer{text-align:center;padding:24px 12px;color:var(--muted);font-size:13px}
+[hidden]{display:none!important}
+@media(min-width:650px){
+ .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .menu{grid-template-columns:repeat(3,minmax(0,1fr))}
+ main{padding:25px 20px}
+}
+</style>
+</head>
+
+<body>
+<div id="loading" style="padding:30px;text-align:center">
+  Yooyyaa Hotel System — Login mirkaneessaa jira...
+</div>
+
+<div id="app" hidden>
+<header>
+  <div class="header-inner">
+    <div class="header-row">
+      <div>
+        <h1>🏨 Yooyyaa Hotel System</h1>
+        <p>Hotel Management Dashboard</p>
+      </div>
+      <button id="logoutBtn" type="button">🚪 Logout</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="status" role="status" aria-live="polite" hidden></div>
+
+  <section class="welcome">
+    <h2>Baga Nagaan Dhuftan!</h2>
+    <p>Sirna bulchiinsa hoteelaa kee keessaa fuula barbaaddu filadhu.</p>
+    <p id="userEmail" style="margin-top:10px;color:#64748b"></p>
+  </section>
+
+  <h2 class="section-title">📊 Hotel Overview</h2>
+  <section class="stats">
+    <div class="stat">
+      <div class="icon">🛏️</div>
+      <div class="label">Total Rooms</div>
+      <div class="number" id="totalRooms">0</div>
+      <small>Kutaalee hoteelaa</small>
+    </div>
+    <div class="stat">
+      <div class="icon">🟢</div>
+      <div class="label">Available Rooms</div>
+      <div class="number" id="availableRooms">0</div>
+      <small>Kutaalee bilisa ta'an</small>
+    </div>
+    <div class="stat">
+      <div class="icon">🔴</div>
+      <div class="label">Occupied Rooms</div>
+      <div class="number" id="occupiedRooms">0</div>
+      <small>Kutaalee qabaman</small>
+    </div>
+    <div class="stat">
+      <div class="icon">👥</div>
+      <div class="label">Registered Guests</div>
+      <div class="number" id="registeredGuests">...</div>
+      <small>Supabase irraa lakkaa'ama</small>
+    </div>
+    <div class="stat">
+      <div class="icon">📅</div>
+      <div class="label">Bookings</div>
+      <div class="number" id="totalBookings">0</div>
+      <small>Browser keessatti kuufaman</small>
+    </div>
+    <div class="stat">
+      <div class="icon">💳</div>
+      <div class="label">Total Payments</div>
+      <div class="number" id="totalPayments">0 ETB</div>
+      <small>Browser keessatti kuufaman</small>
+    </div>
+  </section>
+
+  <h2 class="section-title">⚡ Quick Access</h2>
+  <section class="menu">
+    <a href="room-management.html"><span>🛏️</span>Room Management</a>
+    <a href="guest-registration.html"><span>👤</span>Guest Registration</a>
+    <a href="guests.html"><span>📋</span>Guest Records</a>
+    <a href="bookings.html"><span>📅</span>Bookings</a>
+    <a href="payments.html"><span>💳</span>Payments</a>
+    <a href="hotel-profile.html"><span>🏨</span>Hotel Profile</a>
+  </section>
+
+  <section class="profile hotel">
+    <h2>🏨 Hotel Profile</h2>
+    <p>Maqaa, bilbila, email fi teessoo hoteelaa kee bulchi.</p>
+    <a href="hotel-profile.html">Open Hotel Profile</a>
+  </section>
+
+  <div class="note">
+    <strong>Hubachiisa:</strong>
+    Lakkoofsi keessummootaa Supabase irraa dhufa.
+    Lakkoofsi kutaa, booking fi kaffaltii garuu amma browser kana
+    keessatti kuufame irraa shallagama. Odeeffannoon browser
+    gara bilbila biraatti ofumaan hin darbu.
+  </div>
+</main>
+
+<footer>Yooyyaa Hotel System © 2026</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const SUPABASE_URL = "https://wyesygvwhlmrefqcridg.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+  const HOTEL_ID = "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+  const LOGIN_PAGE = "./hotel-login.html";
+
+  const loading = document.getElementById("loading");
+  const app = document.getElementById("app");
+  const statusBox = document.getElementById("status");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  function showStatus(message) {
+    statusBox.textContent = message;
+    statusBox.hidden = false;
+  }
+
+  function readStoredArray(key) {
+    try {
+      const data = JSON.parse(localStorage.getItem(key) || "[]");
+      return Array.isArray(data) ? data : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  async function updateDashboard(client) {
+    // Kutaa, booking fi kaffaltii amma browser irraa dubbisa.
+    const rooms = readStoredArray("filetHotelRooms");
+    const bookings = readStoredArray("filetBookings");
+    const payments = readStoredArray("filetPayments");
+
+    const available = rooms.filter(room => {
+      const s = String(room.status || "").toLowerCase();
+      return s.includes("available") ||
+             s.includes("free") ||
+             s.includes("bilisa");
+    }).length;
+
+    const occupied = rooms.filter(room => {
+      const s = String(room.status || "").toLowerCase();
+      return s.includes("occupied") ||
+             s.includes("booked") ||
+             s.includes("qabame");
+    }).length;
+
+    document.getElementById("totalRooms").textContent = rooms.length;
+    document.getElementById("availableRooms").textContent = available;
+    document.getElementById("occupiedRooms").textContent = occupied;
+    document.getElementById("totalBookings").textContent = bookings.length;
+
+    let paymentTotal = 0;
+    payments.forEach(payment => {
+      const amount = Number(
+        payment.amount ?? payment.total ?? payment.paymentAmount ?? 0
+      );
+      if (Number.isFinite(amount)) paymentTotal += amount;
+    });
+
+    document.getElementById("totalPayments").textContent =
+      paymentTotal.toLocaleString("en-US", {
+        maximumFractionDigits: 2
+      }) + " ETB";
+
+    // Guest count Supabase irraa, hotel ID keenya qofa.
+    const guestElement = document.getElementById("registeredGuests");
+    guestElement.textContent = "...";
+
+    const { count, error } = await client
+      .from("guests")
+      .select("id", { count: "exact", head: true })
+      .eq("hotel_id", HOTEL_ID);
+
+    if (error) {
+      guestElement.textContent = "!";
+      showStatus(
+        "Lakkoofsa keessummootaa Supabase irraa dubbisuu hin dandeenye: " +
+        error.message
+      );
+      console.error("Guest count error:", error);
+      return;
+    }
+
+    guestElement.textContent = count ?? 0;
+  }
+
+  async function start() {
+    if (!window.supabase) {
+      loading.textContent =
+        "Supabase hin banne. Internet kee ilaaliitii fuula kana irra deebi'i bani.";
+      return;
+    }
+
+    const client = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    try {
+      const { data, error } = await client.auth.getSession();
+      if (error) throw error;
+
+      if (!data.session) {
+        window.location.replace(LOGIN_PAGE);
+        return;
+      }
+
+      const { data: userData, error: userError } =
+        await client.auth.getUser();
+
+      if (userError || !userData.user) {
+        await client.auth.signOut();
+        window.location.replace(LOGIN_PAGE);
+        return;
+      }
+
+      document.getElementById("userEmail").textContent =
+        "Signed in: " + (userData.user.email || "Hotel account");
+
+      loading.hidden = true;
+      app.hidden = false;
+
+      await updateDashboard(client);
+
+      logoutBtn.addEventListener("click", async () => {
+        logoutBtn.disabled = true;
+        logoutBtn.textContent = "Logging out...";
+
+        const { error: signOutError } = await client.auth.signOut();
+
+        if (signOutError) {
+          showStatus("Logout hin milkoofne: " + signOutError.message);
+          logoutBtn.disabled = false;
+          logoutBtn.textContent = "🚪 Logout";
+          return;
+        }
+
+        window.location.replace(LOGIN_PAGE);
+      });
+
+      client.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_OUT" || !session) {
+          window.location.replace(LOGIN_PAGE);
+        }
+      });
+
+      window.addEventListener("pageshow", () => {
+        updateDashboard(client);
+      });
+
+    } catch (error) {
+      loading.textContent =
+        "Login mirkaneessuu hin dandeenye. Internet ilaaliitii irra deebi'i yaali.";
+      console.error("Dashboard auth error:", error);
+    }
+  }
+
+  start();
+})();
+</script>
+</body>
 </html>
