@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="om">
 <head>
@@ -5,32 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#102b4e">
   <title>Yooyyaa Hotel System - Room Management</title>
-
   <style>
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #eef2f7;
       color: #102b4e;
     }
-
     header {
       background: #102b4e;
       color: white;
       text-align: center;
       padding: 20px 12px;
     }
-
     header h1 { margin: 0 0 8px; }
-
-    main {
-      max-width: 650px;
-      margin: auto;
-      padding: 16px;
-    }
-
+    main { max-width: 650px; margin: auto; padding: 16px; }
     .panel {
       background: white;
       padding: 18px;
@@ -38,13 +29,7 @@
       border-radius: 12px;
       box-shadow: 0 2px 7px #00000012;
     }
-
-    label {
-      display: block;
-      margin-top: 12px;
-      font-weight: bold;
-    }
-
+    label { display: block; margin-top: 12px; font-weight: bold; }
     input, select, button {
       width: 100%;
       padding: 12px;
@@ -53,7 +38,6 @@
       border-radius: 8px;
       font-size: 16px;
     }
-
     button {
       background: #102b4e;
       color: white;
@@ -61,279 +45,305 @@
       font-weight: bold;
       cursor: pointer;
     }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-
+    button:disabled { opacity: .6; }
     .room {
       padding: 12px;
       margin-top: 10px;
       border: 1px solid #dbe3ed;
       border-radius: 8px;
     }
-
     .available { color: #15803d; font-weight: bold; }
     .occupied { color: #b91c1c; font-weight: bold; }
     .maintenance { color: #b45309; font-weight: bold; }
-
-    .back {
-      display: inline-block;
-      color: white;
-      margin-top: 10px;
-    }
-
-    #message {
-      overflow-wrap: anywhere;
-      line-height: 1.5;
-    }
+    .back { display: inline-block; color: white; margin-top: 10px; }
+    #message { overflow-wrap: anywhere; line-height: 1.5; }
+    .small { font-size: 13px; color: #64748b; }
   </style>
 </head>
-
 <body>
-  <header>
-    <h1>🏨 Yooyyaa Hotel System</h1>
-    <p>Room Management - Bulchiinsa Kutaa</p>
-    <a class="back" href="./index.html">← Gara Fuula Jalqabaatti</a>
-  </header>
+<header>
+  <h1>🏨 Yooyyaa Hotel System</h1>
+  <p>Room Management - Bulchiinsa Kutaa</p>
+  <a class="back" href="./dashboard.html">← Gara Dashboard</a>
+</header>
 
-  <main>
-    <section class="panel">
-      <h2>➕ Kutaa Haaraa Galmeessi</h2>
+<main>
+  <section class="panel">
+    <h2>➕ Kutaa Haaraa Galmeessi</h2>
+    <form id="roomForm">
+      <label for="roomNumber">Lakkoofsa Kutaa</label>
+      <input id="roomNumber" type="text" placeholder="Fakkeenya: 105" required>
 
-      <form id="roomForm">
-        <label for="roomNumber">Lakkoofsa Kutaa</label>
-        <input id="roomNumber" type="text"
-          placeholder="Fakkeenya: 104" required>
+      <label for="roomType">Gosa Kutaa</label>
+      <select id="roomType" required>
+        <option value="">Gosa filadhu</option>
+        <option value="Single">Single</option>
+        <option value="Double">Double</option>
+        <option value="Twin">Twin</option>
+        <option value="Suite">Suite</option>
+        <option value="Standard">Standard</option>
+        <option value="Deluxe">Deluxe</option>
+      </select>
 
-        <label for="roomType">Gosa Kutaa</label>
-        <select id="roomType" required>
-          <option value="">Gosa filadhu</option>
-          <option value="Single">Single</option>
-          <option value="Double">Double</option>
-          <option value="Twin">Twin</option>
-          <option value="Suite">Suite</option>
-          <option value="Standard">Standard</option>
-          <option value="Deluxe">Deluxe</option>
-        </select>
+      <label for="roomPrice">Gatii Halkan Tokko (ETB)</label>
+      <input id="roomPrice" type="number" min="0" step="0.01"
+        placeholder="Fakkeenya: 1000" required>
 
-        <label for="roomPrice">Gatii Halkan Tokko (ETB)</label>
-        <input id="roomPrice" type="number" min="0"
-          step="0.01" placeholder="Fakkeenya: 1500" required>
+      <label for="roomStatus">Haala Kutaa</label>
+      <select id="roomStatus" required>
+        <option value="available">Bilisa</option>
+        <option value="occupied">Keessummaan keessa jira</option>
+        <option value="maintenance">Suphaa barbaada</option>
+      </select>
 
-        <label for="roomStatus">Haala Kutaa</label>
-        <select id="roomStatus" required>
-          <option value="available">Bilisa</option>
-          <option value="occupied">Keessummaan keessa jira</option>
-          <option value="maintenance">Suphaa barbaada</option>
-        </select>
+      <button id="saveButton" type="submit">Kutaa Galmeessi</button>
+    </form>
 
-        <button id="saveButton" type="submit">Kutaa Galmeessi</button>
-      </form>
+    <button id="create20Button" type="button">
+      Kutaalee 101–120 Uumi / Create 20 Rooms
+    </button>
+    <p class="small">
+      Kutaalee duraan jiran hin irra-deebisu. Kutaalee haaraa qofa dabalata.
+    </p>
+    <p id="message" role="status"></p>
+  </section>
 
-      <p id="message" role="status"></p>
-    </section>
+  <section class="panel">
+    <h2>🛏️ Kutaalee Hoteelaa</h2>
+    <p id="roomCount">Kutaalee fe'aa jira...</p>
+    <button id="refreshButton" type="button">Kutaalee Haaromsi</button>
+    <div id="roomList"></div>
+  </section>
+</main>
 
-    <section class="panel">
-      <h2>🛏️ Kutaalee Hoteelaa</h2>
-      <p id="roomCount">Kutaalee fe'aa jira...</p>
-      <button id="refreshButton" type="button">
-        Kutaalee Haaromsi
-      </button>
-      <div id="roomList"></div>
-    </section>
-  </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://wyesygvwhlmrefqcridg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+const HOTEL_ID = "0be7a002-21fb-4af0-8ac7-7771ba63f609";
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+const form = document.getElementById("roomForm");
+const roomList = document.getElementById("roomList");
+const roomCount = document.getElementById("roomCount");
+const message = document.getElementById("message");
+const saveButton = document.getElementById("saveButton");
+const create20Button = document.getElementById("create20Button");
+const refreshButton = document.getElementById("refreshButton");
 
-  <script>
-    const SUPABASE_URL =
-      "https://wyesygvwhlmrefqcridg.supabase.co";
+if (!window.supabase) {
+  message.textContent = "Supabase hin fe'amne. Internet ilaali.";
+  message.style.color = "#b91c1c";
+  throw new Error("Supabase JS library did not load.");
+}
 
-    const SUPABASE_KEY =
-      "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const HOTEL_ID = "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+function showMessage(text, isError = false) {
+  message.textContent = text;
+  message.style.color = isError ? "#b91c1c" : "#15803d";
+}
 
-    const db = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+function statusLabel(status) {
+  return {
+    available: "Bilisa",
+    occupied: "Keessummaan keessa jira",
+    maintenance: "Suphaa barbaada"
+  }[String(status || "").trim().toLowerCase()] || status;
+}
 
-    const form = document.getElementById("roomForm");
-    const roomList = document.getElementById("roomList");
-    const roomCount = document.getElementById("roomCount");
-    const message = document.getElementById("message");
-    const saveButton = document.getElementById("saveButton");
+function statusClass(status) {
+  const s = String(status || "").trim().toLowerCase();
+  if (s === "available") return "available";
+  if (s === "occupied") return "occupied";
+  return "maintenance";
+}
 
-    function showMessage(text, isError = false) {
-      message.textContent = text;
-      message.style.color = isError ? "#b91c1c" : "#15803d";
-    }
+async function loadRooms() {
+  roomList.replaceChildren();
+  roomCount.textContent = "Kutaalee fe'aa jira...";
 
-    function statusLabel(status) {
-      const labels = {
-        available: "Bilisa",
-        occupied: "Keessummaan keessa jira",
-        maintenance: "Suphaa barbaada"
-      };
+  const { data, error } = await db
+    .from("rooms")
+    .select("id, room_number, room_type, status, price_per_night")
+    .eq("hotel_id", HOTEL_ID)
+    .order("room_number");
 
-      return labels[status] || status;
-    }
+  if (error) {
+    roomCount.textContent = "Kutaalee argachuun hin danda'amne.";
+    showMessage("Dogoggora: " + error.message, true);
+    return;
+  }
 
-    function statusClass(status) {
-      if (status === "available") return "available";
-      if (status === "occupied") return "occupied";
-      return "maintenance";
-    }
+  const rooms = data || [];
+  roomCount.textContent = "Kutaan galmaa'e: " + rooms.length;
 
-    async function loadRooms() {
-      roomList.replaceChildren();
-      roomCount.textContent = "Kutaalee fe'aa jira...";
+  if (rooms.length === 0) {
+    roomList.textContent = "Ammaaf kutaan hin galmoofne.";
+    return;
+  }
 
-      const { data, error } = await db
-        .from("rooms")
-        .select("id, room_number, room_type, status, price_per_night")
-        .eq("hotel_id", HOTEL_ID)
-        .order("room_number");
+  rooms.forEach(room => {
+    const card = document.createElement("div");
+    card.className = "room";
 
-      if (error) {
-        roomCount.textContent = "Kutaalee argachuun hin danda'amne.";
-        showMessage(
-          "Dogoggora: " + error.message +
-          ". Internet fi Supabase RLS ilaali.",
-          true
-        );
-        return;
-      }
+    const heading = document.createElement("h3");
+    heading.textContent = "Kutaa " + room.room_number;
 
-      roomCount.textContent = "Kutaan galmaa'e: " + data.length;
+    const details = document.createElement("p");
+    details.textContent =
+      "Gosa: " + (room.room_type || "Hin ibsamne") +
+      " | Gatii: " +
+      Number(room.price_per_night || 0).toLocaleString() +
+      " ETB/halkan";
 
-      if (data.length === 0) {
-        roomList.textContent = "Ammaaf kutaan hin galmoofne.";
-        return;
-      }
+    const status = document.createElement("p");
+    status.textContent = "Haala: " + statusLabel(room.status);
+    status.className = statusClass(room.status);
 
-      data.forEach((room) => {
-        const card = document.createElement("div");
-        card.className = "room";
+    const label = document.createElement("label");
+    label.textContent = "Haala jijjiiri";
 
-        const heading = document.createElement("h3");
-        heading.textContent = "Kutaa " + room.room_number;
+    const select = document.createElement("select");
 
-        const details = document.createElement("p");
-        details.textContent =
-          "Gosa: " + (room.room_type || "Hin ibsamne") +
-          " | Gatii: " + Number(room.price_per_night).toLocaleString() +
-          " ETB/halkan";
+    [
+      ["available", "Bilisa"],
+      ["occupied", "Keessummaan keessa jira"],
+      ["maintenance", "Suphaa barbaada"]
+    ].forEach(([value, text]) => select.add(new Option(text, value)));
 
-        const status = document.createElement("p");
-        status.textContent = "Haala: " + statusLabel(room.status);
-        status.className = statusClass(room.status);
+    select.value = String(room.status || "").trim().toLowerCase();
 
-        const label = document.createElement("label");
-        label.textContent = "Haala jijjiiri";
-
-        const select = document.createElement("select");
-
-        [
-          ["available", "Bilisa"],
-          ["occupied", "Keessummaan keessa jira"],
-          ["maintenance", "Suphaa barbaada"]
-        ].forEach(([value, text]) => {
-          const option = document.createElement("option");
-          option.value = value;
-          option.textContent = text;
-          select.appendChild(option);
-        });
-
-        select.value = room.status;
-
-        select.addEventListener("change", async () => {
-          select.disabled = true;
-          showMessage("Haala kutaa jijjiiraa jira...");
-
-          const { error } = await db
-            .from("rooms")
-            .update({ status: select.value })
-            .eq("id", room.id)
-            .eq("hotel_id", HOTEL_ID);
-
-          if (error) {
-            showMessage("Jijjiiruun hin milkoofne: " + error.message, true);
-            select.value = room.status;
-          } else {
-            showMessage("Haalli kutaa sirriitti jijjiirameera.");
-            await loadRooms();
-          }
-
-          select.disabled = false;
-        });
-
-        card.append(heading, details, status, label, select);
-        roomList.appendChild(card);
-      });
-    }
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      const number =
-        document.getElementById("roomNumber").value.trim();
-      const type = document.getElementById("roomType").value;
-      const price =
-        Number(document.getElementById("roomPrice").value);
-      const status = document.getElementById("roomStatus").value;
-
-      if (!number || !type || !Number.isFinite(price) || price < 0) {
-        showMessage("Odeeffannoo sirrii guuti.", true);
-        return;
-      }
-
-      saveButton.disabled = true;
-      showMessage("Kutaa galmeessaa jira...");
+    select.addEventListener("change", async () => {
+      const newStatus = select.value;
+      select.disabled = true;
 
       const { error } = await db
         .from("rooms")
-        .insert([{
-          hotel_id: HOTEL_ID,
-          room_number: number,
-          room_type: type,
-          price_per_night: price,
-          status: status
-        }]);
+        .update({ status: newStatus })
+        .eq("id", room.id)
+        .eq("hotel_id", HOTEL_ID);
 
-      saveButton.disabled = false;
+      select.disabled = false;
 
       if (error) {
-        if (error.code === "23505") {
-          showMessage("Lakkoofsi kutaa kun duraan galmaa'eera.", true);
-        } else {
-          showMessage(
-            "Galmeessuun hin milkoofne: " + error.message,
-            true
-          );
-        }
-        return;
+        showMessage("Haala jijjiiruun hin milkoofne: " + error.message, true);
+      } else {
+        showMessage("Haalli kutaa " + room.room_number + " jijjiirameera.");
+        await loadRooms();
       }
-
-      form.reset();
-      showMessage("Kutaan haaraan Supabase keessatti galmaa'eera.");
-      await loadRooms();
     });
 
-    document.getElementById("refreshButton")
-      .addEventListener("click", loadRooms);
+    card.append(heading, details, status, label, select);
+    roomList.appendChild(card);
+  });
+}
 
-    if (window.supabase) {
-      loadRooms();
-    } else {
-      showMessage(
-        "Supabase hin fe'amne. Internet ilaaliitii fuula haaromsi.",
-        true
-      );
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const number = document.getElementById("roomNumber").value.trim();
+  const type = document.getElementById("roomType").value;
+  const price = Number(document.getElementById("roomPrice").value);
+  const status = document.getElementById("roomStatus").value;
+
+  if (!number || !type || !Number.isFinite(price) || price < 0) {
+    showMessage("Odeeffannoo sirrii guuti.", true);
+    return;
+  }
+
+  saveButton.disabled = true;
+  showMessage("Kutaa galmeessaa jira...");
+
+  try {
+    const { error } = await db.from("rooms").insert([{
+      hotel_id: HOTEL_ID,
+      room_number: number,
+      room_type: type,
+      price_per_night: price,
+      status: status
+    }]);
+
+    if (error) {
+      if (error.code === "23505") {
+        showMessage("Lakkoofsi kutaa kun duraan galmaa'eera.", true);
+      } else {
+        showMessage("Galmeessuun hin milkoofne: " + error.message, true);
+      }
+      return;
     }
-  </script>
+
+    form.reset();
+    showMessage("Kutaan " + number + " galmaa'eera.");
+    await loadRooms();
+  } catch (error) {
+    showMessage("Dogoggora: " + error.message, true);
+  } finally {
+    saveButton.disabled = false;
+  }
+});
+
+create20Button.addEventListener("click", async () => {
+  create20Button.disabled = true;
+  showMessage("Kutaalee 101–120 ilaalaa jira...");
+
+  try {
+    const { data, error } = await db
+      .from("rooms")
+      .select("room_number")
+      .eq("hotel_id", HOTEL_ID);
+
+    if (error) throw error;
+
+    const existing = new Set(
+      (data || []).map(room => String(room.room_number).trim())
+    );
+
+    const newRooms = [];
+
+    for (let n = 101; n <= 120; n++) {
+      const number = String(n);
+      if (existing.has(number)) continue;
+
+      newRooms.push({
+        hotel_id: HOTEL_ID,
+        room_number: number,
+        room_type: "Standard",
+        price_per_night: 1000,
+        status: "available"
+      });
+    }
+
+    if (newRooms.length === 0) {
+      showMessage("Kutaaleen 101–120 hundi duraan galmaa'aniiru.");
+      return;
+    }
+
+    const { error: insertError } = await db
+      .from("rooms")
+      .insert(newRooms);
+
+    if (insertError) throw insertError;
+
+    showMessage(
+      "Kutaalee haaraa " + newRooms.length +
+      " dabalameera. Kutaalee duraan jiran hin jijjiirre."
+    );
+
+    await loadRooms();
+  } catch (error) {
+    showMessage(
+      "Kutaalee dabaluu hin dandeenye: " +
+      (error.message || "Dogoggora hin beekamne") +
+      ". Supabase RLS fi unique constraints ilaali.",
+      true
+    );
+  } finally {
+    create20Button.disabled = false;
+  }
+});
+
+refreshButton.addEventListener("click", loadRooms);
+loadRooms();
+</script>
 </body>
 </html>
