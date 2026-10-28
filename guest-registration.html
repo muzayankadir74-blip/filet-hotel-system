@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="om">
 <head>
@@ -7,20 +8,71 @@
   <title>Yooyyaa Hotel System - Guest Registration</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin:0; padding:16px; background:#f1f5f9; font-family:Arial,sans-serif; color:#1e293b; }
-    .container { max-width:500px; margin:20px auto; padding:22px; background:white; border-radius:14px; box-shadow:0 4px 15px #00000015; }
-    .logo { display:block; width:110px; height:110px; object-fit:contain; margin:0 auto 10px; }
-    h2 { text-align:center; color:#123b63; margin-bottom:8px; }
-    .subtitle { text-align:center; color:#64748b; margin-bottom:22px; }
-    label { display:block; margin-top:15px; margin-bottom:6px; font-weight:bold; }
-    input, select { width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; font-size:16px; background:white; }
-    button { width:100%; margin-top:20px; padding:14px; border:0; border-radius:8px; background:#123b63; color:white; font-size:16px; font-weight:bold; cursor:pointer; }
-    button:disabled { opacity:.6; }
-    .message { display:none; margin-top:15px; padding:12px; border-radius:8px; overflow-wrap:anywhere; line-height:1.45; }
-    .success { display:block; background:#dcfce7; color:#166534; }
-    .error { display:block; background:#fee2e2; color:#991b1b; }
-    .info { display:block; background:#e0f2fe; color:#075985; }
-    .back { display:block; text-align:center; margin-top:20px; color:#123b63; text-decoration:none; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f1f5f9;
+      font-family: Arial, sans-serif;
+      color: #1e293b;
+    }
+    .container {
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 22px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 4px 15px #00000015;
+    }
+    .logo {
+      display: block;
+      width: 110px;
+      height: 110px;
+      object-fit: contain;
+      margin: 0 auto 10px;
+    }
+    h2 { text-align: center; color: #123b63; margin-bottom: 8px; }
+    .subtitle { text-align: center; color: #64748b; margin-bottom: 22px; }
+    label { display: block; margin-top: 15px; margin-bottom: 6px; font-weight: bold; }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 16px;
+      background: white;
+    }
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      border: 0;
+      border-radius: 8px;
+      background: #123b63;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; }
+    .message {
+      display: none;
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+      line-height: 1.45;
+    }
+    .success { display: block; background: #dcfce7; color: #166534; }
+    .error { display: block; background: #fee2e2; color: #991b1b; }
+    .info { display: block; background: #e0f2fe; color: #075985; }
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #123b63;
+      text-decoration: none;
+    }
+    .small { font-size: 13px; color: #64748b; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -28,20 +80,25 @@
     <img class="logo"
       src="https://raw.githubusercontent.com/muzayankadir74-blip/filet-hotel-system/main/2_20261020_211800_0001.png"
       alt="Yooyyaa Hotel System Logo">
+
     <h2>Yooyyaa Hotel System</h2>
     <p class="subtitle">Guest Registration / Galmee Keessummaa</p>
 
     <form id="guestForm">
       <label for="full_name">Guest Full Name / Maqaa Guutuu</label>
-      <input type="text" id="full_name" name="full_name" placeholder="Enter guest full name" required>
+      <input type="text" id="full_name" name="full_name"
+        placeholder="Enter guest full name" required>
 
       <label for="phone">Phone Number / Lakkoofsa Bilbilaa</label>
-      <input type="tel" id="phone" name="phone" placeholder="Enter phone number" required>
+      <input type="tel" id="phone" name="phone"
+        placeholder="Enter phone number" required>
 
       <label for="room_number">Room Number / Lakkoofsa Kutaa</label>
       <select id="room_number" name="room_number" required>
         <option value="">Kutaalee fe'aa jira...</option>
       </select>
+      <button type="button" id="refreshRoomsBtn">Refresh Room List / Kutaalee Haaromsi</button>
+      <p class="small" id="roomCount">Kutaalee Supabase irraa fe'aa jira...</p>
 
       <label for="checkin_date">Check-in Date / Guyyaa Seensaa</label>
       <input type="date" id="checkin_date" name="checkin_date" required>
@@ -52,6 +109,7 @@
       <button type="submit" id="submitBtn">Register Guest / Galmeessi</button>
       <div id="message" class="message" role="status" aria-live="polite"></div>
     </form>
+
     <a class="back" href="dashboard.html">← Back to Dashboard</a>
   </div>
 
@@ -65,6 +123,8 @@
     const roomSelect = document.getElementById("room_number");
     const messageBox = document.getElementById("message");
     const submitBtn = document.getElementById("submitBtn");
+    const refreshRoomsBtn = document.getElementById("refreshRoomsBtn");
+    const roomCount = document.getElementById("roomCount");
     const checkinInput = document.getElementById("checkin_date");
     const checkoutInput = document.getElementById("checkout_date");
 
@@ -73,15 +133,28 @@
       messageBox.className = "message " + type;
     }
 
+    function clearMessage() {
+      messageBox.textContent = "";
+      messageBox.className = "message";
+    }
+
     if (!window.supabase) {
-      showMessage("Supabase hin fe'amne. Internet ilaaliitii fuula haaromsi.", "error");
-      roomSelect.innerHTML = '<option value="">Supabase hin banamne</option>';
+      roomSelect.innerHTML = "";
+      roomSelect.add(new Option("Supabase hin banamne", ""));
+      roomCount.textContent = "Supabase library hin fe'amne.";
+      showMessage(
+        "Supabase hin fe'amne. Internet ilaaliitii fuula haaromsi.",
+        "error"
+      );
       throw new Error("Supabase JS library did not load.");
     }
 
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
 
-    function setLocalToday() {
+    function localToday() {
       const now = new Date();
       return [
         now.getFullYear(),
@@ -90,76 +163,127 @@
       ].join("-");
     }
 
-    const localToday = setLocalToday();
-    checkinInput.value = localToday;
-    checkinInput.min = localToday;
-    checkoutInput.min = localToday;
+    function setDateDefaults() {
+      const today = localToday();
+      checkinInput.min = today;
+      checkoutInput.min = checkinInput.value || today;
 
-    checkinInput.addEventListener("change", function () {
-      checkoutInput.min = this.value || localToday;
-      if (checkoutInput.value && checkoutInput.value <= this.value) {
+      if (!checkinInput.value) checkinInput.value = today;
+      if (checkoutInput.value && checkoutInput.value <= checkinInput.value) {
+        checkoutInput.value = "";
+      }
+    }
+
+    setDateDefaults();
+
+    checkinInput.addEventListener("change", () => {
+      checkoutInput.min = checkinInput.value || localToday();
+
+      if (checkoutInput.value && checkoutInput.value <= checkinInput.value) {
         checkoutInput.value = "";
       }
     });
 
-    // Room Management fi Guest Registration lamaan Supabase "rooms" table fayyadamu.
     async function loadAvailableRooms() {
-      roomSelect.innerHTML = '<option value="">Kutaalee fe'aa jira...</option>';
       roomSelect.disabled = true;
+      refreshRoomsBtn.disabled = true;
+      roomSelect.replaceChildren(new Option("Kutaalee fe'aa jira...", ""));
+      roomCount.textContent = "Supabase irraa kutaalee fe'aa jira...";
+      clearMessage();
 
-      const { data, error } = await supabaseClient
-        .from("rooms")
-        .select("id, room_number, room_type, status, price_per_night")
-        .eq("hotel_id", HOTEL_ID)
-        .order("room_number");
+      try {
+        const { data, error } = await supabaseClient
+          .from("rooms")
+          .select("id, room_number, room_type, status, price_per_night")
+          .eq("hotel_id", HOTEL_ID)
+          .order("room_number");
 
-      roomSelect.disabled = false;
+        if (error) throw error;
 
-      if (error) {
+        const rooms = Array.isArray(data) ? data : [];
+
+        // Status qubee xixiqqaa/guddaa fi space irratti hundaa'ee qindeessa.
+        const availableRooms = rooms.filter(room =>
+          room &&
+          String(room.status ?? "").trim().toLowerCase() === "available" &&
+          String(room.room_number ?? "").trim() !== ""
+        );
+
+        roomSelect.replaceChildren(
+          new Option("-- Kutaa Bilisaa Filadhu --", "")
+        );
+
+        availableRooms.forEach(room => {
+          const number = String(room.room_number).trim();
+          const option = new Option("", number);
+
+          let label = "Kutaa " + number;
+
+          if (room.room_type) {
+            label += " - " + room.room_type;
+          }
+
+          if (room.price_per_night !== null &&
+              room.price_per_night !== undefined &&
+              room.price_per_night !== "") {
+            const price = Number(room.price_per_night);
+            if (Number.isFinite(price)) {
+              label += " - " + price.toLocaleString() + " ETB/halkan";
+            }
+          }
+
+          option.textContent = label;
+          roomSelect.add(option);
+        });
+
+        roomCount.textContent =
+          "Kutaalee hundaa: " + rooms.length +
+          " | Kutaalee bilisaa: " + availableRooms.length;
+
+        // Room numbers Supabase irraa dhufan irratti hundaa'ee hubachiisa.
+        if (availableRooms.some(room =>
+          String(room.room_number).trim() === "103"
+        )) {
+          clearMessage();
+        } else {
+          showMessage(
+            "Kutaan 103 tarree Supabase irraa argame keessatti hin jiru ykn status isaa available miti. " +
+            "Kutaalee hundaa: " + rooms.length +
+            ". Kutaalee bilisaa: " + availableRooms.length +
+            ". Room Management fi Supabase rooms table ilaali.",
+            "info"
+          );
+        }
+
+        if (availableRooms.length === 0) {
+          showMessage(
+            "Kutaa bilisaa hin arganne. Room Management keessatti status kutaa available ta'uu mirkaneessi.",
+            "info"
+          );
+        }
+      } catch (error) {
         console.error("Room loading error:", error);
-        roomSelect.innerHTML = '<option value="">Kutaalee argachuun hin danda'amne</option>';
+
+        roomSelect.replaceChildren(
+          new Option("Kutaalee argachuun hin danda'amne", "")
+        );
+
+        roomCount.textContent = "Kutaalee fe'uun hin milkoofne.";
         showMessage(
           "Kutaalee Supabase irraa argachuun hin milkoofne: " +
-          error.message + ". Internet fi Supabase RLS ilaali.",
+          (error.message || "Dogoggora hin beekamne") +
+          ". Internet, Supabase fi RLS policy ilaali.",
           "error"
         );
-        return;
-      }
-
-      const rooms = Array.isArray(data) ? data : [];
-      const availableRooms = rooms.filter(room =>
-        room && String(room.status || "").trim().toLowerCase() === "available"
-      );
-
-      roomSelect.innerHTML = "";
-      const firstOption = document.createElement("option");
-      firstOption.value = "";
-      firstOption.textContent = "-- Kutaa Bilisaa Filadhu --";
-      roomSelect.appendChild(firstOption);
-
-      availableRooms.forEach(room => {
-        const option = document.createElement("option");
-        option.value = String(room.room_number);
-        let label = "Kutaa " + room.room_number;
-        if (room.room_type) label += " - " + room.room_type;
-        if (room.price_per_night !== null && room.price_per_night !== undefined) {
-          label += " - " + Number(room.price_per_night).toLocaleString() + " ETB/halkan";
-        }
-        option.textContent = label;
-        roomSelect.appendChild(option);
-      });
-
-      if (availableRooms.length === 0) {
-        showMessage(
-          "Kutaan bilisaa hin jiru. Room Management keessatti kutaa galmeessi ykn status isaa Bilisa godhi.",
-          "info"
-        );
-      } else {
-        messageBox.className = "message";
+      } finally {
+        roomSelect.disabled = false;
+        refreshRoomsBtn.disabled = false;
       }
     }
 
-    guestForm.addEventListener("submit", async function (event) {
+    refreshRoomsBtn.addEventListener("click", loadAvailableRooms);
+
+    guestForm.addEventListener("submit", async function(event) {
       event.preventDefault();
 
       const fullName = document.getElementById("full_name").value.trim();
@@ -168,13 +292,21 @@
       const checkinDate = checkinInput.value;
       const checkoutDate = checkoutInput.value;
 
+      if (!fullName || !phone) {
+        showMessage("Maqaa guutuu fi lakkoofsa bilbilaa guuti.", "error");
+        return;
+      }
+
       if (!roomNumber) {
         showMessage("Maaloo kutaa bilisaa filadhu.", "error");
         return;
       }
 
       if (checkoutDate <= checkinDate) {
-        showMessage("Guyyaan ba'umsaa guyyaa seensaa booda ta'uu qaba.", "error");
+        showMessage(
+          "Guyyaan ba'umsaa guyyaa seensaa booda ta'uu qaba.",
+          "error"
+        );
         return;
       }
 
@@ -182,17 +314,25 @@
       submitBtn.textContent = "Galmeessaa jira...";
 
       try {
-        // Status kutaa yeroo galmee raawwatamu irra deebi'ee mirkaneessi.
-        const { data: room, error: roomError } = await supabaseClient
-          .from("rooms")
-          .select("id, room_number, status")
-          .eq("hotel_id", HOTEL_ID)
-          .eq("room_number", roomNumber)
-          .maybeSingle();
+        const { data: matchingRooms, error: roomError } =
+          await supabaseClient
+            .from("rooms")
+            .select("id, room_number, status")
+            .eq("hotel_id", HOTEL_ID)
+            .eq("room_number", roomNumber)
+            .limit(10);
 
         if (roomError) throw roomError;
-        if (!room || String(room.status || "").toLowerCase() !== "available") {
-          showMessage("Kutaan filatame amma bilisa miti. Kutaalee haaromsiitii irra deebi'ii filadhu.", "error");
+
+        const room = (matchingRooms || []).find(item =>
+          String(item.status ?? "").trim().toLowerCase() === "available"
+        );
+
+        if (!room) {
+          showMessage(
+            "Kutaan filatame amma bilisa miti. Refresh Room List tuqiitii irra deebi'ii filadhu.",
+            "error"
+          );
           await loadAvailableRooms();
           return;
         }
@@ -210,7 +350,6 @@
 
         if (guestError) throw guestError;
 
-        // Room status Supabase keessatti jijjiiri, localStorage irratti hin kuusin.
         const { error: updateError } = await supabaseClient
           .from("rooms")
           .update({ status: "occupied" })
@@ -220,25 +359,25 @@
         if (updateError) {
           console.error("Room status update error:", updateError);
           showMessage(
-            "Keessummaan Supabase keessatti galmaa'eera; garuu status kutaa jijjiiruun hin milkoofne. Room Management keessatti kutaa kana mirkaneessi.",
+            "Keessummaan galmaa'eera; garuu status kutaa jijjiiruun hin milkoofne. Room Management keessatti mirkaneessi.",
             "info"
           );
         } else {
           showMessage(
-            "Galmeen milkaa'eera! Keessummaan galmaa'eera; kutaa " + roomNumber + " keessa galmaa'e.",
+            "Galmeen milkaa'eera! Keessummaan kutaa " +
+            roomNumber + " keessatti galmaa'eera.",
             "success"
           );
         }
 
         guestForm.reset();
-        checkinInput.value = localToday;
-        checkinInput.min = localToday;
-        checkoutInput.min = localToday;
+        setDateDefaults();
         await loadAvailableRooms();
       } catch (error) {
         console.error("Guest registration error:", error);
         showMessage(
-          "Galmeen hin milkoofne: " + (error.message || "Dogoggora hin beekamne") +
+          "Galmeen hin milkoofne: " +
+          (error.message || "Dogoggora hin beekamne") +
           ". Internet, Supabase fi RLS policy mirkaneessi.",
           "error"
         );
