@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yooyyaa Hotel System - Bar Management</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f6fa;
+      color: #17324d;
+    }
+    header {
+      background: #102b4e;
+      color: white;
+      padding: 22px 16px;
+      text-align: center;
+    }
+    header h1 { margin: 0 0 8px; font-size: 23px; }
+    header p { margin: 0; font-size: 14px; }
+    main {
+      max-width: 850px;
+      margin: 20px auto;
+      padding: 0 14px 30px;
+    }
+    .panel {
+      background: white;
+      padding: 18px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #0000000d;
+    }
+    h2 { margin-top: 0; font-size: 19px; }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccd5df;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button, .back {
+      display: inline-block;
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 14px;
+      background: #087f5b;
+      color: white;
+      font-size: 15px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .back { background: #102b4e; }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 430px;
+    }
+    th, td {
+      padding: 11px 8px;
+      border-bottom: 1px solid #e5eaf0;
+      text-align: left;
+    }
+    th { background: #edf2f7; }
+    .note { color: #5d6b7a; font-size: 14px; line-height: 1.5; }
+    #message { margin-top: 12px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Yooyyaa Hotel System</h1>
+    <p>Bar Management — Bulchiinsa Baar</p>
+  </header>
+
+  <main>
+    <p><a class="back" href="dashboard.html">← Gara Dashboard</a></p>
+
+    <section class="panel">
+      <h2>➕ Meeshaa Baar Galmeessi</h2>
+      <p class="note">
+        Fuulli kun meeshaalee baar galmeessuuf yaadame.
+        Odeeffannoon yeroo ammaa bilbila/browser kana keessatti qofa kuufama.
+      </p>
+
+      <form id="barForm">
+        <label for="itemName">Maqaa meeshaa</label>
+        <input id="itemName" required placeholder="Fakkeenya: Bishaan">
+
+        <label for="itemType">Gosa meeshaa</label>
+        <select id="itemType" required>
+          <option value="">Gosa filadhu</option>
+          <option>Dhugaatii</option>
+          <option>Nyaata salphaa</option>
+          <option>Meeshaa biraa</option>
+        </select>
+
+        <label for="itemQty">Baay'ina</label>
+        <input id="itemQty" type="number" min="0" step="1" required placeholder="Fakkeenya: 20">
+
+        <label for="itemPrice">Gatii tokkoo (ETB)</label>
+        <input id="itemPrice" type="number" min="0" step="0.01" required placeholder="Fakkeenya: 30">
+
+        <button type="submit">Meeshaa Galmeessi</button>
+      </form>
+      <p id="message" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <h2>📦 Tarree Meeshaalee Baar</h2>
+      <p id="itemCount">Meeshaalee galmaa'an: 0</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Maqaa</th>
+              <th>Gosa</th>
+              <th>Baay'ina</th>
+              <th>Gatii (ETB)</th>
+            </tr>
+          </thead>
+          <tbody id="itemList">
+            <tr><td colspan="4">Meeshaan hin galmoofne.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "yooyyaaBarItems";
+    const form = document.getElementById("barForm");
+    const list = document.getElementById("itemList");
+    const message = document.getElementById("message");
+
+    function getItems() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function renderItems() {
+      const items = getItems();
+      list.replaceChildren();
+
+      document.getElementById("itemCount").textContent =
+        "Meeshaalee galmaa'an: " + items.length;
+
+      if (!items.length) {
+        const row = list.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 4;
+        cell.textContent = "Meeshaan hin galmoofne.";
+        return;
+      }
+
+      items.forEach(item => {
+        const row = list.insertRow();
+        [item.name, item.type, item.quantity,
+          Number(item.price).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })
+        ].forEach(value => {
+          row.insertCell().textContent = value;
+        });
+      });
+    }
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const item = {
+        name: document.getElementById("itemName").value.trim(),
+        type: document.getElementById("itemType").value,
+        quantity: Number(document.getElementById("itemQty").value),
+        price: Number(document.getElementById("itemPrice").value)
+      };
+
+      if (!item.name || !item.type ||
+          !Number.isFinite(item.quantity) || item.quantity < 0 ||
+          !Number.isFinite(item.price) || item.price < 0) {
+        message.textContent = "Maaloo odeeffannoo sirrii guuti.";
+        return;
+      }
+
+      try {
+        const items = getItems();
+        items.push(item);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        form.reset();
+        renderItems();
+        message.textContent = "Meeshaan milkaa'inaan galmaa'e.";
+      } catch {
+        message.textContent =
+          "Kuusuun hin danda'amne. Bakka bilbila kee irratti kuusaa ilaali.";
+      }
+    });
+
+    renderItems();
+  </script>
+</body>
+</html>
