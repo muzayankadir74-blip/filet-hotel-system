@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yooyyaa Hotel System - Restaurant Management</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f6fa;
+      color: #17324d;
+    }
+
+    header {
+      background: #102b4e;
+      color: white;
+      padding: 22px 16px;
+      text-align: center;
+    }
+
+    header h1 { margin: 0 0 8px; font-size: 23px; }
+    header p { margin: 0; font-size: 14px; }
+
+    main {
+      max-width: 850px;
+      margin: 20px auto;
+      padding: 0 14px 30px;
+    }
+
+    .panel {
+      background: white;
+      padding: 18px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #0000000d;
+    }
+
+    h2 { margin-top: 0; font-size: 19px; }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccd5df;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button, .back {
+      display: inline-block;
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 14px;
+      background: #087f5b;
+      color: white;
+      font-size: 15px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .back { background: #102b4e; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 480px;
+    }
+
+    th, td {
+      padding: 11px 8px;
+      border-bottom: 1px solid #e5eaf0;
+      text-align: left;
+    }
+
+    th { background: #edf2f7; }
+
+    .note {
+      color: #5d6b7a;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    #message { margin-top: 12px; font-weight: bold; }
+    .delete-btn { background: #b42318; margin: 0; padding: 7px 10px; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Yooyyaa Hotel System</h1>
+    <p>Restaurant Management — Bulchiinsa Mana Nyaataa</p>
+  </header>
+
+  <main>
+    <p><a class="back" href="dashboard.html">← Gara Dashboard</a></p>
+
+    <section class="panel">
+      <h2>➕ Nyaata Galmeessi</h2>
+      <p class="note">
+        Nyaata mana nyaataa, gatii fi baay'ina isaa galmeessi.
+        Odeeffannoon fuula kanaa amma browser bilbila kana keessatti kuufama;
+        Supabase waliin ammallee wal hin qabanne.
+      </p>
+
+      <form id="foodForm">
+        <label for="foodName">Maqaa nyaataa</label>
+        <input id="foodName" required placeholder="Fakkeenya: Injera firfir">
+
+        <label for="foodCategory">Gosa</label>
+        <select id="foodCategory" required>
+          <option value="">Gosa filadhu</option>
+          <option>Breakfast</option>
+          <option>Lunch</option>
+          <option>Dinner</option>
+          <option>Snack</option>
+          <option>Other</option>
+        </select>
+
+        <label for="foodQuantity">Baay'ina jiru</label>
+        <input id="foodQuantity" type="number" min="0" step="1" required placeholder="Fakkeenya: 10">
+
+        <label for="foodPrice">Gatii tokkoo (ETB)</label>
+        <input id="foodPrice" type="number" min="0" step="0.01" required placeholder="Fakkeenya: 250">
+
+        <button type="submit">Nyaata Galmeessi</button>
+      </form>
+
+      <p id="message" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <h2>🍽️ Tarree Nyaataa</h2>
+      <p id="foodCount">Nyaata galmaa'e: 0</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Maqaa</th>
+              <th>Gosa</th>
+              <th>Baay'ina</th>
+              <th>Gatii (ETB)</th>
+              <th>Haqi</th>
+            </tr>
+          </thead>
+          <tbody id="foodList">
+            <tr><td colspan="5">Nyaanni hin galmoofne.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "yooyyaaRestaurantItems";
+    const form = document.getElementById("foodForm");
+    const list = document.getElementById("foodList");
+    const message = document.getElementById("message");
+
+    function getFoods() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function renderFoods() {
+      const foods = getFoods();
+      list.replaceChildren();
+
+      document.getElementById("foodCount").textContent =
+        "Nyaata galmaa'e: " + foods.length;
+
+      if (foods.length === 0) {
+        const row = list.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 5;
+        cell.textContent = "Nyaanni hin galmoofne.";
+        return;
+      }
+
+      foods.forEach((food, index) => {
+        const row = list.insertRow();
+
+        [
+          food.name,
+          food.category,
+          food.quantity,
+          Number(food.price).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })
+        ].forEach(value => {
+          row.insertCell().textContent = value;
+        });
+
+        const actionCell = row.insertCell();
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "delete-btn";
+        deleteButton.textContent = "Haqi";
+
+        deleteButton.addEventListener("click", () => {
+          const updatedFoods = getFoods();
+          updatedFoods.splice(index, 1);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedFoods));
+          renderFoods();
+          message.textContent = "Nyaanni tarree keessaa haqame.";
+        });
+
+        actionCell.appendChild(deleteButton);
+      });
+    }
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const food = {
+        name: document.getElementById("foodName").value.trim(),
+        category: document.getElementById("foodCategory").value,
+        quantity: Number(document.getElementById("foodQuantity").value),
+        price: Number(document.getElementById("foodPrice").value)
+      };
+
+      if (
+        !food.name ||
+        !food.category ||
+        !Number.isFinite(food.quantity) ||
+        food.quantity < 0 ||
+        !Number.isFinite(food.price) ||
+        food.price < 0
+      ) {
+        message.textContent = "Maaloo odeeffannoo sirrii guuti.";
+        return;
+      }
+
+      try {
+        const foods = getFoods();
+        foods.push(food);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(foods));
+        form.reset();
+        renderFoods();
+        message.textContent = "Nyaanni milkaa'inaan galmaa'e.";
+      } catch {
+        message.textContent = "Kuusuun hin danda'amne. Kuusaa browser ilaali.";
+      }
+    });
+
+    renderFoods();
+  </script>
+</body>
+</html>
