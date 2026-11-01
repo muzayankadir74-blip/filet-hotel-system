@@ -1,9 +1,13 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="om">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yooyyaa Hotel System - Restaurant Management</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     * { box-sizing: border-box; }
 
@@ -67,6 +71,11 @@
       cursor: pointer;
     }
 
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .back { background: #102b4e; }
 
     .table-wrap { overflow-x: auto; }
@@ -91,8 +100,22 @@
       line-height: 1.5;
     }
 
-    #message { margin-top: 12px; font-weight: bold; }
-    .delete-btn { background: #b42318; margin: 0; padding: 7px 10px; }
+    #message {
+      margin-top: 12px;
+      font-weight: bold;
+      overflow-wrap: anywhere;
+    }
+
+    .delete-btn {
+      background: #b42318;
+      margin: 0;
+      padding: 7px 10px;
+    }
+
+    .refresh-btn {
+      background: #102b4e;
+      margin-bottom: 12px;
+    }
   </style>
 </head>
 
@@ -109,8 +132,7 @@
       <h2>➕ Nyaata Galmeessi</h2>
       <p class="note">
         Nyaata mana nyaataa, gatii fi baay'ina isaa galmeessi.
-        Odeeffannoon fuula kanaa amma browser bilbila kana keessatti kuufama;
-        Supabase waliin ammallee wal hin qabanne.
+        Odeeffannoon Supabase database keessatti kuufama.
       </p>
 
       <form id="foodForm">
@@ -128,12 +150,14 @@
         </select>
 
         <label for="foodQuantity">Baay'ina jiru</label>
-        <input id="foodQuantity" type="number" min="0" step="1" required placeholder="Fakkeenya: 10">
+        <input id="foodQuantity" type="number" min="0" step="1"
+          required placeholder="Fakkeenya: 10">
 
         <label for="foodPrice">Gatii tokkoo (ETB)</label>
-        <input id="foodPrice" type="number" min="0" step="0.01" required placeholder="Fakkeenya: 250">
+        <input id="foodPrice" type="number" min="0" step="0.01"
+          required placeholder="Fakkeenya: 250">
 
-        <button type="submit">Nyaata Galmeessi</button>
+        <button id="saveButton" type="submit">Nyaata Galmeessi</button>
       </form>
 
       <p id="message" role="status"></p>
@@ -141,7 +165,12 @@
 
     <section class="panel">
       <h2>🍽️ Tarree Nyaataa</h2>
+
       <p id="foodCount">Nyaata galmaa'e: 0</p>
+
+      <button class="refresh-btn" id="refreshButton" type="button">
+        Tarree Haaromsi
+      </button>
 
       <div class="table-wrap">
         <table>
@@ -155,7 +184,7 @@
             </tr>
           </thead>
           <tbody id="foodList">
-            <tr><td colspan="5">Nyaanni hin galmoofne.</td></tr>
+            <tr><td colspan="5">Eegaa...</td></tr>
           </tbody>
         </table>
       </div>
@@ -163,21 +192,85 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "yooyyaaRestaurantItems";
+    const SUPABASE_URL =
+      "https://wyesygvwhlmrefqcridg.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+
+    const HOTEL_ID =
+      "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+
+    const LOGIN_PAGE = "./hotel-login.html";
+
+    const client = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
     const form = document.getElementById("foodForm");
     const list = document.getElementById("foodList");
     const message = document.getElementById("message");
+    const saveButton = document.getElementById("saveButton");
+    const refreshButton = document.getElementById("refreshButton");
 
-    function getFoods() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      } catch {
-        return [];
-      }
+    let currentUser = null;
+
+    function showMessage(text, isError = false) {
+      message.textContent = text;
+      message.style.color = isError ? "#b42318" : "#087f5b";
     }
 
-    function renderFoods() {
-      const foods = getFoods();
+    async function checkLogin() {
+      const { data, error } = await client.auth.getSession();
+
+      if (error || !data.session) {
+        window.location.replace(LOGIN_PAGE);
+        return false;
+      }
+
+      const { data: userData, error: userError } =
+        await client.auth.getUser();
+
+      if (userError || !userData.user) {
+        await client.auth.signOut();
+        window.location.replace(LOGIN_PAGE);
+        return false;
+      }
+
+      currentUser = userData.user;
+
+      if (currentUser.id !==
+        "5541bd2d-27fa-4a83-9f3e-60215daecf20") {
+        showMessage("User mirga qabu miti.", true);
+        return false;
+      }
+
+      return true;
+    }
+
+    async function loadFoods() {
+      list.innerHTML =
+        '<tr><td colspan="5">Eegaa...</td></tr>';
+
+      const { data, error } = await client
+        .from("restaurant_items")
+        .select("id, name, category, quantity, price")
+        .eq("hotel_id", HOTEL_ID)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        showMessage("Nyaata fe'uun hin danda'amne: " +
+          error.message, true);
+        list.innerHTML =
+          '<tr><td colspan="5">Dogoggorri uumame.</td></tr>';
+        return;
+      }
+
+      renderFoods(data || []);
+    }
+
+    function renderFoods(foods) {
       list.replaceChildren();
 
       document.getElementById("foodCount").textContent =
@@ -191,7 +284,7 @@
         return;
       }
 
-      foods.forEach((food, index) => {
+      foods.forEach(food => {
         const row = list.insertRow();
 
         [
@@ -203,35 +296,65 @@
             maximumFractionDigits: 2
           })
         ].forEach(value => {
-          row.insertCell().textContent = value;
+          row.insertCell().textContent = value ?? "";
         });
 
         const actionCell = row.insertCell();
         const deleteButton = document.createElement("button");
+
         deleteButton.type = "button";
         deleteButton.className = "delete-btn";
         deleteButton.textContent = "Haqi";
 
-        deleteButton.addEventListener("click", () => {
-          const updatedFoods = getFoods();
-          updatedFoods.splice(index, 1);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedFoods));
-          renderFoods();
-          message.textContent = "Nyaanni tarree keessaa haqame.";
+        deleteButton.addEventListener("click", async () => {
+          const confirmed = confirm(
+            "Nyaata kana haquu barbaaddaa?"
+          );
+
+          if (!confirmed) return;
+
+          deleteButton.disabled = true;
+
+          const { error } = await client
+            .from("restaurant_items")
+            .delete()
+            .eq("id", food.id)
+            .eq("hotel_id", HOTEL_ID);
+
+          if (error) {
+            showMessage("Haqiinsi hin milkoofne: " +
+              error.message, true);
+            deleteButton.disabled = false;
+            return;
+          }
+
+          showMessage("Nyaanni milkaa'inaan haqame.");
+          await loadFoods();
         });
 
         actionCell.appendChild(deleteButton);
       });
     }
 
-    form.addEventListener("submit", function(event) {
+    form.addEventListener("submit", async function(event) {
       event.preventDefault();
 
+      if (!currentUser) {
+        showMessage("Maaloo jalqaba login godhi.", true);
+        return;
+      }
+
       const food = {
+        hotel_id: HOTEL_ID,
         name: document.getElementById("foodName").value.trim(),
         category: document.getElementById("foodCategory").value,
-        quantity: Number(document.getElementById("foodQuantity").value),
-        price: Number(document.getElementById("foodPrice").value)
+        quantity: Number(
+          document.getElementById("foodQuantity").value
+        ),
+        price: Number(
+          document.getElementById("foodPrice").value
+        ),
+        is_available: true
       };
 
       if (
@@ -242,23 +365,48 @@
         !Number.isFinite(food.price) ||
         food.price < 0
       ) {
-        message.textContent = "Maaloo odeeffannoo sirrii guuti.";
+        showMessage("Maaloo odeeffannoo sirrii guuti.", true);
         return;
       }
 
-      try {
-        const foods = getFoods();
-        foods.push(food);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(foods));
-        form.reset();
-        renderFoods();
-        message.textContent = "Nyaanni milkaa'inaan galmaa'e.";
-      } catch {
-        message.textContent = "Kuusuun hin danda'amne. Kuusaa browser ilaali.";
+      saveButton.disabled = true;
+      saveButton.textContent = "Kuusaa jira...";
+
+      const { error } = await client
+        .from("restaurant_items")
+        .insert(food);
+
+      saveButton.disabled = false;
+      saveButton.textContent = "Nyaata Galmeessi";
+
+      if (error) {
+        showMessage("Nyaata kuusuun hin danda'amne: " +
+          error.message, true);
+        return;
+      }
+
+      form.reset();
+      showMessage("Nyaanni Supabase keessatti milkaa'inaan galmaa'e.");
+      await loadFoods();
+    });
+
+    refreshButton.addEventListener("click", loadFoods);
+
+    client.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        window.location.replace(LOGIN_PAGE);
       }
     });
 
-    renderFoods();
+    async function startPage() {
+      const loggedIn = await checkLogin();
+
+      if (loggedIn) {
+        await loadFoods();
+      }
+    }
+
+    startPage();
   </script>
 </body>
 </html>
