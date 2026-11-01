@@ -1,0 +1,522 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yooyyaa Hotel System - Restaurant Orders</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#17324d}
+header{background:#102b4e;color:white;padding:20px 14px;text-align:center}
+header h1{margin:0 0 7px;font-size:23px}
+main{max-width:950px;margin:20px auto;padding:0 13px 35px}
+.panel{background:white;padding:17px;margin-bottom:17px;border-radius:12px;box-shadow:0 2px 8px #0000000d}
+h2{font-size:19px;margin-top:0}
+label{display:block;font-weight:bold;margin:12px 0 6px}
+input,select{width:100%;padding:12px;border:1px solid #ccd5df;border-radius:8px;font-size:16px;background:white}
+button,.back{border:0;border-radius:8px;padding:11px 15px;margin-top:12px;background:#087f5b;color:white;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block}
+button:disabled{opacity:.6}
+.back{background:#102b4e}
+.refresh{background:#245b91}
+.delete{background:#c0392b;margin:0;padding:7px 9px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:570px}
+th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #e5eaf0}
+th{background:#edf2f7}
+.note{font-size:14px;color:#5d6b7a;line-height:1.5}
+#message{font-weight:bold;line-height:1.5}
+.menu-item{border:1px solid #e0e6ed;border-radius:9px;padding:12px;margin:9px 0}
+.menu-item strong{display:block;margin-bottom:5px}
+.menu-item button{margin-top:8px}
+.total{font-size:20px;font-weight:bold;margin-top:15px}
+.status{padding:8px;border-radius:6px}
+@media(max-width:500px){.panel{padding:13px}header h1{font-size:20px}}
+</style>
+</head>
+
+<body>
+<header>
+<h1>Yooyyaa Hotel System</h1>
+<p>Restaurant Orders — Ajaja Nyaataa</p>
+</header>
+
+<main>
+<p><a class="back" href="dashboard.html">← Gara Dashboard</a></p>
+
+<section class="panel">
+<h2>🧾 Ajaja Haaraa Galmeessi</h2>
+<p class="note">Nyaata filadhu, baay'ina galchi, ajaja maamilaa kuusi.</p>
+
+<form id="orderForm">
+<label for="guestName">Maqaa maamilaa</label>
+<input id="guestName" placeholder="Maqaa maamilaa">
+
+<label for="orderType">Gosa ajajaa</label>
+<select id="orderType" required>
+<option value="Dine-in">Minjaala (Dine-in)</option>
+<option value="Room">Kutaa hotelii (Room)</option>
+<option value="Takeaway">Fudhatanii deemuu (Takeaway)</option>
+</select>
+
+<div id="tableField">
+<label for="tableNumber">Lakkoofsa minjaalaa</label>
+<input id="tableNumber" placeholder="Fakkeenya: 1">
+</div>
+
+<div id="roomField" style="display:none">
+<label for="roomNumber">Lakkoofsa kutaa</label>
+<input id="roomNumber" placeholder="Fakkeenya: 101">
+</div>
+
+<hr style="border:0;border-top:1px solid #e5eaf0;margin:18px 0">
+
+<h2>🍽️ Nyaata Filadhu</h2>
+<div id="menuList">Nyaata fe'aa jira...</div>
+
+<h3>Nyaata Ajajame</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Nyaata</th>
+<th>Baay'ina</th>
+<th>Gatii</th>
+<th>Waliigala</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="cartList">
+<tr><td colspan="5">Nyaata hin filatamne.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="total">
+Waliigala: <span id="grandTotal">0.00</span> ETB
+</div>
+
+<button type="submit" id="saveOrder">Ajaja Galmeessi</button>
+</form>
+
+<p id="message" role="status"></p>
+</section>
+
+<section class="panel">
+<h2>📋 Ajajawwan Galmaa'an</h2>
+<button type="button" class="refresh" id="refreshOrders">🔄 Haaromsi</button>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Guyyaa</th>
+<th>Maamila</th>
+<th>Ajaja</th>
+<th>Waliigala</th>
+<th>Haala</th>
+<th>Jijjiiri</th>
+</tr>
+</thead>
+<tbody id="ordersList">
+<tr><td colspan="6">Ajajawwan fe'aa jira...</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://wyesygvwhlmrefqcridg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+const HOTEL_ID = "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+const AUTHORIZED_USER_ID = "5541bd2d-27fa-4a83-9f3e-60215daecf20";
+const LOGIN_PAGE = "./hotel-login.html";
+
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const $ = id => document.getElementById(id);
+let menuItems = [];
+let cart = [];
+let currentUser = null;
+
+function message(text,success=false){
+  $("message").textContent=text;
+  $("message").style.color=success?"#087f5b":"#c0392b";
+}
+
+async function checkLogin(){
+  const {data,error}=await db.auth.getSession();
+
+  if(error || !data.session){
+    window.location.href=LOGIN_PAGE;
+    return false;
+  }
+
+  currentUser=data.session.user;
+
+  if(currentUser.id!==AUTHORIZED_USER_ID){
+    message("Fayyadamaan kun mirga fuula kanaa hin qabu.");
+    $("orderForm").querySelectorAll("input,select,button").forEach(x=>x.disabled=true);
+    return false;
+  }
+
+  return true;
+}
+
+// ORDER TYPE FIELDS
+$("orderType").addEventListener("change",()=>{
+  const type=$("orderType").value;
+  $("tableField").style.display=type==="Dine-in"?"block":"none";
+  $("roomField").style.display=type==="Room"?"block":"none";
+});
+
+// LOAD RESTAURANT MENU
+async function loadMenu(){
+  $("menuList").textContent="Nyaata fe'aa jira...";
+
+  const {data,error}=await db
+    .from("restaurant_items")
+    .select("id,name,category,quantity,price,is_available")
+    .eq("hotel_id",HOTEL_ID)
+    .eq("is_available",true)
+    .order("name");
+
+  if(error){
+    $("menuList").textContent="Nyaata argachuun hin danda'amne: "+error.message;
+    return;
+  }
+
+  menuItems=data||[];
+  renderMenu();
+}
+
+function renderMenu(){
+  const area=$("menuList");
+  area.replaceChildren();
+
+  if(menuItems.length===0){
+    area.textContent="Nyaanni galmaa'e hin jiru. Dura Restaurant Management keessatti nyaata galmeessi.";
+    return;
+  }
+
+  menuItems.forEach(item=>{
+    const div=document.createElement("div");
+    div.className="menu-item";
+
+    const title=document.createElement("strong");
+    title.textContent=item.name;
+
+    const detail=document.createElement("span");
+    detail.textContent=item.category+" — "+Number(item.price).toFixed(2)+" ETB";
+
+    const add=document.createElement("button");
+    add.type="button";
+    add.textContent="+ Nyaata Ajajaatti Dabali";
+    add.addEventListener("click",()=>addToCart(item.id));
+
+    div.append(title,detail,document.createElement("br"),add);
+    area.appendChild(div);
+  });
+}
+
+function addToCart(id){
+  const item=menuItems.find(x=>x.id===id);
+  if(!item)return;
+
+  const existing=cart.find(x=>x.id===id);
+
+  if(existing){
+    existing.quantity+=1;
+  }else{
+    cart.push({
+      id:item.id,
+      name:item.name,
+      price:Number(item.price),
+      quantity:1
+    });
+  }
+
+  renderCart();
+}
+
+function renderCart(){
+  const body=$("cartList");
+  body.replaceChildren();
+  let total=0;
+
+  if(cart.length===0){
+    const row=body.insertRow();
+    const cell=row.insertCell();
+    cell.colSpan=5;
+    cell.textContent="Nyaata hin filatamne.";
+  }
+
+  cart.forEach((item,index)=>{
+    const subtotal=item.price*item.quantity;
+    total+=subtotal;
+    const row=body.insertRow();
+
+    row.insertCell().textContent=item.name;
+
+    const qtyCell=row.insertCell();
+    const qty=document.createElement("input");
+    qty.type="number";
+    qty.min="1";
+    qty.step="1";
+    qty.value=item.quantity;
+    qty.style.width="75px";
+    qty.addEventListener("change",()=>{
+      const n=Number(qty.value);
+      if(Number.isInteger(n)&&n>0){
+        item.quantity=n;
+      }
+      renderCart();
+    });
+    qtyCell.appendChild(qty);
+
+    row.insertCell().textContent=item.price.toFixed(2);
+    row.insertCell().textContent=subtotal.toFixed(2);
+
+    const action=row.insertCell();
+    const remove=document.createElement("button");
+    remove.type="button";
+    remove.className="delete";
+    remove.textContent="Haqi";
+    remove.addEventListener("click",()=>{
+      cart.splice(index,1);
+      renderCart();
+    });
+    action.appendChild(remove);
+  });
+
+  $("grandTotal").textContent=total.toFixed(2);
+}
+
+// SAVE ORDER
+$("orderForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  if(!currentUser){
+    message("Maaloo dura seeni.");
+    return;
+  }
+
+  if(cart.length===0){
+    message("Maaloo dura nyaata filadhu.");
+    return;
+  }
+
+  const type=$("orderType").value;
+  const tableNumber=$("tableNumber").value.trim();
+  const roomNumber=$("roomNumber").value.trim();
+
+  if(type==="Dine-in"&&!tableNumber){
+    message("Lakkoofsa minjaalaa guuti.");
+    return;
+  }
+
+  if(type==="Room"&&!roomNumber){
+    message("Lakkoofsa kutaa guuti.");
+    return;
+  }
+
+  const total=cart.reduce((sum,item)=>sum+item.price*item.quantity,0);
+  $("saveOrder").disabled=true;
+  message("Ajaja kuusaa jira...",true);
+
+  const orderData={
+    hotel_id:HOTEL_ID,
+    order_type:type,
+    table_number:type==="Dine-in"?tableNumber:null,
+    room_number:type==="Room"?roomNumber:null,
+    guest_name:$("guestName").value.trim()||null,
+    status:"Pending",
+    total_amount:total
+  };
+
+  const {data:order,error:orderError}=await db
+    .from("restaurant_orders")
+    .insert([orderData])
+    .select("id")
+    .single();
+
+  if(orderError){
+    $("saveOrder").disabled=false;
+    message("Ajaja kuusuun hin danda'amne: "+orderError.message);
+    return;
+  }
+
+  const orderItems=cart.map(item=>({
+    hotel_id:HOTEL_ID,
+    order_id:order.id,
+    item_name:item.name,
+    quantity:item.quantity,
+    unit_price:item.price,
+    subtotal:item.price*item.quantity
+  }));
+
+  const {error:itemError}=await db
+    .from("restaurant_order_items")
+    .insert(orderItems);
+
+  if(itemError){
+    $("saveOrder").disabled=false;
+    message("Ajajni uumameera, garuu tarreen nyaataa hin kuufamne: "+itemError.message);
+    return;
+  }
+
+  cart=[];
+  $("orderForm").reset();
+  $("tableField").style.display="block";
+  $("roomField").style.display="none";
+  renderCart();
+
+  $("saveOrder").disabled=false;
+  message("Ajajni milkaa'inaan galmaa'e!",true);
+
+  await loadOrders();
+});
+
+// LOAD ORDERS
+async function loadOrders(){
+  $("ordersList").innerHTML=
+    '<tr><td colspan="6">Ajajawwan fe'aa jira...</td></tr>';
+
+  const {data,error}=await db
+    .from("restaurant_orders")
+    .select("id,guest_name,order_type,table_number,room_number,status,total_amount,created_at")
+    .eq("hotel_id",HOTEL_ID)
+    .order("created_at",{ascending:false})
+    .limit(50);
+
+  if(error){
+    $("ordersList").innerHTML=
+      '<tr><td colspan="6">Ajajawwan argachuun hin danda'amne.</td></tr>';
+    message("Dogoggora: "+error.message);
+    return;
+  }
+
+  const body=$("ordersList");
+  body.replaceChildren();
+
+  if(!data||data.length===0){
+    const row=body.insertRow();
+    const cell=row.insertCell();
+    cell.colSpan=6;
+    cell.textContent="Ajajni hin galmoofne.";
+    return;
+  }
+
+  data.forEach(order=>{
+    const row=body.insertRow();
+    const date=new Date(order.created_at).toLocaleString();
+
+    row.insertCell().textContent=date;
+    row.insertCell().textContent=order.guest_name||"-";
+
+    let place=order.order_type;
+    if(order.table_number)place+=" / Minjaala "+order.table_number;
+    if(order.room_number)place+=" / Kutaa "+order.room_number;
+    row.insertCell().textContent=place;
+
+    row.insertCell().textContent=
+      Number(order.total_amount).toFixed(2)+" ETB";
+
+    const statusCell=row.insertCell();
+    const statusSelect=document.createElement("select");
+
+    ["Pending","Preparing","Ready","Served","Cancelled"].forEach(status=>{
+      const option=document.createElement("option");
+      option.value=status;
+      option.textContent=status;
+      statusSelect.appendChild(option);
+    });
+
+    statusSelect.value=order.status;
+    statusSelect.addEventListener("change",()=>{
+      updateStatus(order.id,statusSelect.value,statusSelect);
+    });
+    statusCell.appendChild(statusSelect);
+
+    const actionCell=row.insertCell();
+    const detail=document.createElement("button");
+    detail.type="button";
+    detail.className="refresh";
+    detail.textContent="Nyaata";
+    detail.addEventListener("click",()=>showOrderItems(order.id));
+    actionCell.appendChild(detail);
+  });
+}
+
+// UPDATE ORDER STATUS
+async function updateStatus(id,status,control){
+  control.disabled=true;
+
+  const {error}=await db
+    .from("restaurant_orders")
+    .update({status:status})
+    .eq("id",id)
+    .eq("hotel_id",HOTEL_ID);
+
+  control.disabled=false;
+
+  if(error){
+    message("Haala ajajaa jijjiiruun hin danda'amne: "+error.message);
+    await loadOrders();
+    return;
+  }
+
+  message("Haalli ajajaa jijjiirame.",true);
+}
+
+// VIEW ORDER ITEMS
+async function showOrderItems(orderId){
+  const {data,error}=await db
+    .from("restaurant_order_items")
+    .select("item_name,quantity,unit_price,subtotal")
+    .eq("order_id",orderId)
+    .eq("hotel_id",HOTEL_ID);
+
+  if(error){
+    message("Nyaata ajajaa argachuun hin danda'amne: "+error.message);
+    return;
+  }
+
+  if(!data||data.length===0){
+    alert("Nyaanni ajajaa kanaa hin argamne.");
+    return;
+  }
+
+  const lines=data.map(item=>
+    item.item_name+" — "+item.quantity+" x "+
+    Number(item.unit_price).toFixed(2)+" = "+
+    Number(item.subtotal).toFixed(2)+" ETB"
+  );
+
+  alert("Nyaata ajajaa:\n\n"+lines.join("\n"));
+}
+
+$("refreshOrders").addEventListener("click",loadOrders);
+
+db.auth.onAuthStateChange((event,session)=>{
+  if(event==="SIGNED_OUT"||!session){
+    window.location.href=LOGIN_PAGE;
+  }
+});
+
+async function startPage(){
+  const loggedIn=await checkLogin();
+  if(!loggedIn)return;
+  await loadMenu();
+  await loadOrders();
+}
+
+renderCart();
+startPage();
+</script>
+</body>
+</html>
