@@ -1,205 +1,375 @@
 
-<script>
-(() => {
-  const SUPABASE_URL =
-    "https://wyesygvwhlmrefqcridg.supabase.co";
+<!DOCTYPE html>
+<html lang="om">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yooyyaa Hotel System - Dashboard</title>
 
-  const SUPABASE_KEY =
-    "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+  <style>
+    * { box-sizing: border-box; }
 
-  const HOTEL_ID =
-    "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: Arial, sans-serif;
+      background: #f2f5f9;
+      color: #172b4d;
+    }
 
-  const LOGIN_PAGE = "./hotel-login.html";
+    header {
+      background: #102b4e;
+      color: white;
+      padding: 20px 16px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+    }
 
-  const loading = document.getElementById("loading");
-  const app = document.getElementById("app");
-  const statusBox = document.getElementById("status");
-  const logoutBtn = document.getElementById("logoutBtn");
+    header h2 {
+      margin: 0 0 8px;
+      font-size: 21px;
+    }
 
-  function showStatus(message) {
-    statusBox.textContent = message;
-    statusBox.hidden = false;
-  }
+    header p {
+      margin: 0;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
 
-  async function updateDashboard(client) {
-    statusBox.hidden = true;
+    h3 { margin-top: 22px; }
 
-    const guestElement =
-      document.getElementById("registeredGuests");
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
 
-    const roomElement =
-      document.getElementById("totalRooms");
+    .card {
+      background: white;
+      padding: 17px 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #0000000d;
+      text-align: center;
+      min-width: 0;
+    }
 
-    const availableElement =
-      document.getElementById("availableRooms");
+    .card p {
+      margin: 0 0 10px;
+      color: #64748b;
+      font-size: 13px;
+    }
 
-    const occupiedElement =
-      document.getElementById("occupiedRooms");
+    .number {
+      font-size: 25px;
+      font-weight: bold;
+      overflow-wrap: anywhere;
+    }
 
-    const bookingElement =
-      document.getElementById("totalBookings");
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
 
-    const paymentElement =
-      document.getElementById("totalPayments");
+    .menu a {
+      display: block;
+      background: white;
+      color: #102b4e;
+      padding: 17px 10px;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: bold;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
 
-    try {
-      // ROOMS: Supabase irraa
-      const { data: rooms, error: roomError } = await client
-        .from("rooms")
-        .select("room_number,status")
-        .eq("hotel_id", HOTEL_ID);
+    .menu a:active { background: #e8eef6; }
 
-      if (roomError) throw new Error("Rooms: " + roomError.message);
+    #loading {
+      background: white;
+      padding: 22px;
+      border-radius: 10px;
+      text-align: center;
+    }
 
-      const roomList = rooms || [];
+    #status {
+      background: #fff0f0;
+      color: #a12626;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+      overflow-wrap: anywhere;
+    }
 
-      const available = roomList.filter(room => {
-        const s = String(room.status || "").toLowerCase();
-        return ["available", "free", "bilisa"].some(x =>
-          s.includes(x)
-        );
-      }).length;
+    button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 18px;
+      border: none;
+      border-radius: 9px;
+      background: #b42318;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
 
-      const occupied = roomList.filter(room => {
-        const s = String(room.status || "").toLowerCase();
-        return ["occupied", "booked", "reserved", "qabame"].some(x =>
-          s.includes(x)
-        );
-      }).length;
+    footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 12px;
+      margin: 24px 0 10px;
+    }
+  </style>
+</head>
 
-      roomElement.textContent = roomList.length;
-      availableElement.textContent = available;
-      occupiedElement.textContent = occupied;
+<body>
 
-      // GUESTS: Supabase irraa
-      const { count: guestCount, error: guestError } =
-        await client
+  <div id="loading">
+    <h3>Yooyyaa Hotel System</h3>
+    <p>Dashboard fe'amaa jira. Mee xiqqoo eegi...</p>
+  </div>
+
+  <main id="app" hidden>
+
+    <header>
+      <h2>Yooyyaa Hotel System</h2>
+      <p id="userEmail">Hotel Dashboard</p>
+    </header>
+
+    <div id="status" hidden></div>
+
+    <h3>Hotel Overview</h3>
+
+    <section class="stats">
+      <div class="card">
+        <p>Total Rooms</p>
+        <div class="number" id="totalRooms">0</div>
+      </div>
+
+      <div class="card">
+        <p>Available Rooms</p>
+        <div class="number" id="availableRooms">0</div>
+      </div>
+
+      <div class="card">
+        <p>Occupied Rooms</p>
+        <div class="number" id="occupiedRooms">0</div>
+      </div>
+
+      <div class="card">
+        <p>Registered Guests</p>
+        <div class="number" id="registeredGuests">0</div>
+      </div>
+
+      <div class="card">
+        <p>Total Bookings</p>
+        <div class="number" id="totalBookings">0</div>
+      </div>
+
+      <div class="card">
+        <p>Total Payments</p>
+        <div class="number" id="totalPayments">0 ETB</div>
+      </div>
+    </section>
+
+    <h3>Hotel Management</h3>
+
+    <nav class="menu">
+      <a href="./room-management.html">🛏️ Room Management</a>
+      <a href="./guest-registration.html">👤 Guest Registration</a>
+      <a href="./guests.html">📋 Guest Records</a>
+      <a href="./bookings.html">📅 Bookings</a>
+      <a href="./payments.html">💰 Payments</a>
+      <a href="./hotel-profile.html">🏨 Hotel Profile</a>
+      <a href="./bar-management.html">🍹 Bar Management</a>
+      <a href="./restaurant-management.html">🍽️ Restaurant</a>
+      <a href="./restaurant-orders.html">🧾 Restaurant Orders</a>
+    </nav>
+
+    <button id="logoutBtn">🚪 Logout</button>
+
+    <footer>
+      Yooyyaa Hotel System
+    </footer>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+  (() => {
+    "use strict";
+
+    const SUPABASE_URL =
+      "https://wyesygvwhlmrefqcridg.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+
+    const HOTEL_ID =
+      "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+
+    const LOGIN_PAGE = "./hotel-login.html";
+
+    const loading = document.getElementById("loading");
+    const app = document.getElementById("app");
+    const statusBox = document.getElementById("status");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    function showStatus(message) {
+      statusBox.textContent = message;
+      statusBox.hidden = false;
+    }
+
+    async function updateDashboard(client) {
+      statusBox.hidden = true;
+
+      try {
+        // ROOMS
+        const { data: rooms, error: roomError } = await client
+          .from("rooms")
+          .select("room_number,status")
+          .eq("hotel_id", HOTEL_ID);
+
+        if (roomError) throw new Error("Rooms: " + roomError.message);
+
+        const roomList = rooms || [];
+
+        const available = roomList.filter(room => {
+          const s = String(room.status || "").toLowerCase();
+          return ["available", "free", "bilisa"].some(x => s.includes(x));
+        }).length;
+
+        const occupied = roomList.filter(room => {
+          const s = String(room.status || "").toLowerCase();
+          return ["occupied", "booked", "reserved", "qabame"].some(x => s.includes(x));
+        }).length;
+
+        document.getElementById("totalRooms").textContent = roomList.length;
+        document.getElementById("availableRooms").textContent = available;
+        document.getElementById("occupiedRooms").textContent = occupied;
+
+        // GUESTS
+        const { count: guestCount, error: guestError } = await client
           .from("guests")
           .select("id", { count: "exact", head: true })
           .eq("hotel_id", HOTEL_ID);
 
-      if (guestError) throw new Error("Guests: " + guestError.message);
+        if (guestError) throw new Error("Guests: " + guestError.message);
 
-      guestElement.textContent = guestCount ?? 0;
+        document.getElementById("registeredGuests").textContent =
+          guestCount ?? 0;
 
-      // BOOKINGS: Supabase irraa
-      const { count: bookingCount, error: bookingError } =
-        await client
+        // BOOKINGS
+        const { count: bookingCount, error: bookingError } = await client
           .from("bookings")
           .select("id", { count: "exact", head: true })
           .eq("hotel_id", HOTEL_ID);
 
-      if (bookingError) {
-        throw new Error("Bookings: " + bookingError.message);
-      }
+        if (bookingError) throw new Error("Bookings: " + bookingError.message);
 
-      bookingElement.textContent = bookingCount ?? 0;
+        document.getElementById("totalBookings").textContent =
+          bookingCount ?? 0;
 
-      // PAYMENTS: Supabase irraa
-      const { data: payments, error: paymentError } =
-        await client
+        // PAYMENTS
+        const { data: payments, error: paymentError } = await client
           .from("payments")
           .select("amount")
           .eq("hotel_id", HOTEL_ID);
 
-      if (paymentError) {
-        throw new Error("Payments: " + paymentError.message);
+        if (paymentError) throw new Error("Payments: " + paymentError.message);
+
+        const paymentTotal = (payments || []).reduce((sum, payment) => {
+          const amount = Number(payment.amount || 0);
+          return sum + (Number.isFinite(amount) ? amount : 0);
+        }, 0);
+
+        document.getElementById("totalPayments").textContent =
+          paymentTotal.toLocaleString("en-US", {
+            maximumFractionDigits: 2
+          }) + " ETB";
+
+      } catch (error) {
+        showStatus(
+          "Odeeffannoo Supabase dubbisuu irratti rakkoon uumame: " +
+          error.message
+        );
+        console.error("Dashboard data error:", error);
+      }
+    }
+
+    async function start() {
+      if (!window.supabase) {
+        loading.textContent =
+          "Supabase hin fe'amne. Internet kee ilaali.";
+        return;
       }
 
-      const paymentTotal = (payments || []).reduce((sum, payment) => {
-        const amount = Number(payment.amount || 0);
-        return sum + (Number.isFinite(amount) ? amount : 0);
-      }, 0);
-
-      paymentElement.textContent =
-        paymentTotal.toLocaleString("en-US", {
-          maximumFractionDigits: 2
-        }) + " ETB";
-
-    } catch (error) {
-      showStatus(
-        "Odeeffannoo Supabase dubbisuu irratti rakkoon uumame: " +
-        error.message
+      const client = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
       );
-      console.error("Dashboard data error:", error);
-    }
-  }
 
-  async function start() {
-    if (!window.supabase) {
-      loading.textContent =
-        "Supabase hin banne. Internet kee ilaali.";
-      return;
-    }
+      try {
+        const { data, error } = await client.auth.getSession();
 
-    const client = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+        if (error) throw error;
 
-    try {
-      const { data, error } = await client.auth.getSession();
-
-      if (error) throw error;
-
-      if (!data.session) {
-        window.location.replace(LOGIN_PAGE);
-        return;
-      }
-
-      const { data: userData, error: userError } =
-        await client.auth.getUser();
-
-      if (userError || !userData.user) {
-        await client.auth.signOut();
-        window.location.replace(LOGIN_PAGE);
-        return;
-      }
-
-      document.getElementById("userEmail").textContent =
-        "Signed in: " + (userData.user.email || "Hotel account");
-
-      loading.hidden = true;
-      app.hidden = false;
-
-      await updateDashboard(client);
-
-      logoutBtn.addEventListener("click", async () => {
-        logoutBtn.disabled = true;
-        logoutBtn.textContent = "Logging out...";
-
-        const { error: signOutError } =
-          await client.auth.signOut();
-
-        if (signOutError) {
-          showStatus("Logout hin milkoofne: " + signOutError.message);
-          logoutBtn.disabled = false;
-          logoutBtn.textContent = "🚪 Logout";
+        if (!data.session) {
+          window.location.replace(LOGIN_PAGE);
           return;
         }
 
-        window.location.replace(LOGIN_PAGE);
-      });
+        const { data: userData, error: userError } =
+          await client.auth.getUser();
 
-      client.auth.onAuthStateChange((event, session) => {
-        if (event === "SIGNED_OUT" || !session) {
+        if (userError || !userData.user) {
+          await client.auth.signOut();
           window.location.replace(LOGIN_PAGE);
+          return;
         }
-      });
 
-      window.addEventListener("pageshow", () => {
-        updateDashboard(client);
-      });
+        document.getElementById("userEmail").textContent =
+          "Signed in: " + (userData.user.email || "Hotel account");
 
-    } catch (error) {
-      loading.textContent =
-        "Login mirkaneessuu hin dandeenye. Internet ilaaliitii irra deebi'i.";
+        loading.hidden = true;
+        app.hidden = false;
 
-      console.error("Dashboard auth error:", error);
+        await updateDashboard(client);
+
+        logoutBtn.addEventListener("click", async () => {
+          logoutBtn.disabled = true;
+          logoutBtn.textContent = "Logging out...";
+
+          const { error: signOutError } = await client.auth.signOut();
+
+          if (signOutError) {
+            showStatus("Logout hin milkoofne: " + signOutError.message);
+            logoutBtn.disabled = false;
+            logoutBtn.textContent = "🚪 Logout";
+            return;
+          }
+
+          window.location.replace(LOGIN_PAGE);
+        });
+
+        client.auth.onAuthStateChange((event, session) => {
+          if (event === "SIGNED_OUT" || !session) {
+            window.location.replace(LOGIN_PAGE);
+          }
+        });
+
+      } catch (error) {
+        loading.textContent =
+          "Login mirkaneessuu hin dandeenye. Internet ilaaliitii irra deebi'i.";
+        console.error("Dashboard auth error:", error);
+      }
     }
-  }
 
-  start();
-})();
-</script>
+    start();
+  })();
+  </script>
+
+</body>
+</html>
