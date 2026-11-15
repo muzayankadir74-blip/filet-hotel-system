@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,14 +7,20 @@
 <title>Yooyyaa Hotel System - Payments</title>
 
 <style>
+*{box-sizing:border-box}
 body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#f1f5f9;color:#172554}
 header{background:#102b4e;color:white;padding:20px;text-align:center;border-radius:12px}
 .card{background:white;padding:16px;margin-top:14px;border-radius:12px}
 label{display:block;margin-top:12px}
-input,select{width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px;background:white}
+input,select{width:100%;padding:12px;margin-top:6px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px;background:white}
 button{width:100%;padding:13px;margin-top:16px;background:#102b4e;color:white;border:0;border-radius:8px;font-size:16px}
-.payment{border-left:5px solid #16a34a}
+button:disabled{opacity:.5}
 .back{background:#475569}
+.payment{border-left:5px solid #16a34a}
+#message{padding:12px;margin-top:12px;border-radius:8px;display:none;overflow-wrap:anywhere}
+.success{background:#dcfce7;color:#166534}
+.error{background:#fee2e2;color:#991b1b}
+.small{color:#64748b;font-size:13px}
 </style>
 </head>
 
@@ -24,14 +31,17 @@ button{width:100%;padding:13px;margin-top:16px;background:#102b4e;color:white;bo
 <p>Payments &amp; Receipts</p>
 </header>
 
+<div id="message"></div>
+
 <div class="card">
 <h3>Record Payment</h3>
 
-<label>Guest Name</label>
-<input id="name" placeholder="Guest full name">
+<label>Select Booking</label>
+<select id="booking">
+<option value="">Loading bookings...</option>
+</select>
 
-<label>Room Number</label>
-<input id="room" placeholder="Example: 101">
+<p class="small" id="bookingInfo">Choose a booking to see guest and room details.</p>
 
 <label>Payment Amount (ETB)</label>
 <input id="amount" type="number" min="0.01" step="0.01" placeholder="Amount paid">
@@ -44,10 +54,7 @@ button{width:100%;padding:13px;margin-top:16px;background:#102b4e;color:white;bo
 <option value="POS">POS</option>
 </select>
 
-<label>Payment Date</label>
-<input id="date" type="date">
-
-<button onclick="addPayment()">Save Payment</button>
+<button id="saveBtn">Save Payment</button>
 <button class="back" onclick="location.href='dashboard.html'">Back to Dashboard</button>
 </div>
 
@@ -58,81 +65,285 @@ button{width:100%;padding:13px;margin-top:16px;background:#102b4e;color:white;bo
 </div>
 
 <h3>Payment History</h3>
-<div id="list"></div>
+<div id="list">Loading payments...</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-let payments=JSON.parse(localStorage.getItem("filetPayments")||"[]");
+(async function(){
 
-document.getElementById("date").value =
-  new Date().toLocaleDateString("en-CA");
+const SUPABASE_URL =
+"https://wyesygvwhlmrefqcridg.supabase.co";
 
-function addPayment(){
- const name=document.getElementById("name").value.trim();
- const room=document.getElementById("room").value.trim();
- const amountInput=document.getElementById("amount").value;
- const amount=Number(amountInput);
- const method=document.getElementById("method").value;
- const date=document.getElementById("date").value;
+const SUPABASE_KEY =
+"sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
 
- if(!name||!room||!date||amountInput===""){
-  alert("Please complete all fields.");
-  return;
- }
+const HOTEL_ID =
+"0be7a002-21fb-4af0-8ac7-7771ba63f609";
 
- if(!Number.isFinite(amount)||amount<=0){
-  alert("Enter a payment amount greater than zero.");
-  return;
- }
+const LOGIN_PAGE = "./hotel-login.html";
 
- payments.push({
-  id:Date.now(),
-  name,
-  room,
-  amount,
-  method,
-  date
- });
+const client = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
 
- localStorage.setItem("filetPayments",JSON.stringify(payments));
- showPayments();
- alert("Payment recorded successfully!");
+const bookingSelect = document.getElementById("booking");
+const amountInput = document.getElementById("amount");
+const methodSelect = document.getElementById("method");
+const saveBtn = document.getElementById("saveBtn");
+const list = document.getElementById("list");
+const message = document.getElementById("message");
 
- document.getElementById("name").value="";
- document.getElementById("room").value="";
- document.getElementById("amount").value="";
+let bookings = [];
+let guests = {};
+let rooms = {};
+
+function showMessage(text,type){
+message.textContent = text;
+message.className = type;
+message.style.display = "block";
 }
 
-function showPayments(){
- const list=document.getElementById("list");
- list.innerHTML="";
- let sum=0;
-
- if(payments.length===0){
-  list.textContent="No payments recorded yet.";
- } else {
-  payments.slice().reverse().forEach(p=>{
-   sum+=Number(p.amount)||0;
-
-   const card=document.createElement("div");
-   card.className="card payment";
-
-   const info=document.createElement("p");
-   info.textContent="Guest: "+p.name+
-    " | Room: "+p.room+
-    " | Amount: "+Number(p.amount).toLocaleString()+" ETB"+
-    " | Method: "+p.method+
-    " | Date: "+p.date;
-
-   card.appendChild(info);
-   list.appendChild(card);
-  });
- }
-
- document.getElementById("total").textContent=sum.toLocaleString()+" ETB";
- document.getElementById("count").textContent=payments.length;
+function money(value){
+return Number(value || 0).toLocaleString("en-US",{
+maximumFractionDigits:2
+}) + " ETB";
 }
 
-showPayments();
+async function start(){
+
+try{
+
+const {data:sessionData,error:sessionError} =
+await client.auth.getSession();
+
+if(sessionError) throw sessionError;
+
+if(!sessionData.session){
+location.replace(LOGIN_PAGE);
+return;
+}
+
+// LOAD BOOKINGS
+const {data:bookingData,error:bookingError} =
+await client
+.from("bookings")
+.select("id,guest_id,room_id,check_in,check_out,status")
+.eq("hotel_id",HOTEL_ID)
+.order("created_at",{ascending:false});
+
+if(bookingError) throw bookingError;
+
+bookings = bookingData || [];
+
+if(bookings.length === 0){
+bookingSelect.innerHTML =
+'<option value="">No bookings available</option>';
+}else{
+
+const guestIds = [...new Set(bookings.map(b=>b.guest_id).filter(Boolean))];
+const roomIds = [...new Set(bookings.map(b=>b.room_id).filter(Boolean))];
+
+// LOAD GUESTS
+if(guestIds.length){
+const {data,error} = await client
+.from("guests")
+.select("id,full_name,room_number")
+.in("id",guestIds);
+
+if(error) throw error;
+
+(data || []).forEach(g=>guests[g.id]=g);
+}
+
+// LOAD ROOMS
+if(roomIds.length){
+const {data,error} = await client
+.from("rooms")
+.select("id,room_number")
+.in("id",roomIds);
+
+if(error) throw error;
+
+(data || []).forEach(r=>rooms[r.id]=r);
+}
+
+bookingSelect.innerHTML =
+'<option value="">Select a booking</option>';
+
+bookings.forEach(b=>{
+
+const guest = guests[b.guest_id];
+const room = rooms[b.room_id];
+
+const guestName = guest ? guest.full_name : "Guest";
+const roomNumber = room ? room.room_number : "Room";
+
+const option = document.createElement("option");
+option.value = b.id;
+option.textContent =
+guestName + " - Room " + roomNumber +
+" (" + b.check_in + " to " + b.check_out + ")";
+
+bookingSelect.appendChild(option);
+
+});
+
+}
+
+await loadPayments();
+
+}catch(error){
+showMessage("Error: " + error.message,"error");
+console.error(error);
+}
+}
+
+// SHOW SELECTED BOOKING
+bookingSelect.addEventListener("change",()=>{
+
+const booking = bookings.find(b=>b.id===bookingSelect.value);
+
+if(!booking){
+document.getElementById("bookingInfo").textContent =
+"Choose a booking to see guest and room details.";
+return;
+}
+
+const guest = guests[booking.guest_id];
+const room = rooms[booking.room_id];
+
+document.getElementById("bookingInfo").textContent =
+"Guest: " + (guest ? guest.full_name : "Unknown") +
+" | Room: " + (room ? room.room_number : "Unknown") +
+" | Check-in: " + booking.check_in +
+" | Check-out: " + booking.check_out;
+
+});
+
+// SAVE PAYMENT TO SUPABASE
+saveBtn.addEventListener("click",async()=>{
+
+const bookingId = bookingSelect.value;
+const amount = Number(amountInput.value);
+const method = methodSelect.value;
+
+if(!bookingId){
+showMessage("Please select a booking.","error");
+return;
+}
+
+if(!Number.isFinite(amount) || amount <= 0){
+showMessage("Enter an amount greater than zero.","error");
+return;
+}
+
+saveBtn.disabled = true;
+saveBtn.textContent = "Saving...";
+
+try{
+
+const {data:sessionData} = await client.auth.getSession();
+
+if(!sessionData.session){
+location.replace(LOGIN_PAGE);
+return;
+}
+
+const {error} = await client
+.from("payments")
+.insert({
+hotel_id: HOTEL_ID,
+booking_id: bookingId,
+amount: amount,
+payment_method: method
+});
+
+if(error) throw error;
+
+showMessage("Payment saved successfully!","success");
+
+amountInput.value = "";
+
+await loadPayments();
+
+}catch(error){
+
+showMessage(
+"Payment could not be saved: " + error.message,
+"error"
+);
+
+console.error(error);
+
+}finally{
+
+saveBtn.disabled = false;
+saveBtn.textContent = "Save Payment";
+
+}
+
+});
+
+// LOAD PAYMENT HISTORY
+async function loadPayments(){
+
+const {data,error} = await client
+.from("payments")
+.select("id,booking_id,amount,payment_method,created_at")
+.eq("hotel_id",HOTEL_ID)
+.order("created_at",{ascending:false});
+
+if(error) throw error;
+
+const payments = data || [];
+
+let sum = 0;
+
+list.innerHTML = "";
+
+if(payments.length === 0){
+
+list.textContent = "No payments recorded yet.";
+
+}else{
+
+payments.forEach(p=>{
+
+sum += Number(p.amount || 0);
+
+const booking = bookings.find(b=>b.id===p.booking_id);
+const guest = booking ? guests[booking.guest_id] : null;
+const room = booking ? rooms[booking.room_id] : null;
+
+const card = document.createElement("div");
+card.className = "card payment";
+
+const info = document.createElement("p");
+
+info.textContent =
+"Guest: " + (guest ? guest.full_name : "Unknown") +
+" | Room: " + (room ? room.room_number : "Unknown") +
+" | Amount: " + money(p.amount) +
+" | Method: " + p.payment_method +
+" | Date: " + new Date(p.created_at).toLocaleString();
+
+card.appendChild(info);
+list.appendChild(card);
+
+});
+
+}
+
+document.getElementById("total").textContent = money(sum);
+document.getElementById("count").textContent = payments.length;
+
+}
+
+await start();
+
+})();
 </script>
 
 </body>
