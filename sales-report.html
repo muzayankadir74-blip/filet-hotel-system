@@ -12,12 +12,14 @@ body{margin:0;padding:15px;background:#f2f5f9;color:#20364b;font-family:Arial,sa
 .container{max-width:900px;margin:auto}
 .card{background:white;padding:18px;border-radius:15px;margin-bottom:16px;box-shadow:0 3px 12px #0000000c}
 h2,h3{margin-top:0}
-button{border:0;border-radius:8px;padding:12px 16px;background:#087f5b;color:white;font-size:15px}
+button{border:0;border-radius:8px;padding:12px 15px;background:#087f5b;color:white;font-size:14px;margin:4px 2px;cursor:pointer}
+button.secondary{background:#285f91}
+button.active{background:#102b4e;outline:2px solid #9bb8d4}
 input{padding:11px;border:1px solid #ccd5df;border-radius:8px;width:100%;margin:7px 0 14px}
 .summary{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stat{background:#edf3f8;padding:15px;border-radius:10px}
 .stat small{display:block;color:#53677a;margin-bottom:8px}
-.stat strong{font-size:20px}
+.stat strong{font-size:19px}
 table{width:100%;border-collapse:collapse;min-width:480px}
 th,td{text-align:left;padding:12px 9px;border-bottom:1px solid #e3e8ed}
 th{background:#edf2f7}
@@ -25,6 +27,12 @@ th{background:#edf2f7}
 .total{font-size:23px;font-weight:bold;color:#087f5b}
 .muted{color:#64748b}
 .error{color:#b42318}
+.period{display:flex;flex-wrap:wrap;gap:5px}
+@media print{
+ body{background:white;padding:0}
+ button,a{display:none}
+ .card{box-shadow:none;border:1px solid #ddd}
+}
 </style>
 </head>
 <body>
@@ -38,13 +46,26 @@ th{background:#edf2f7}
 </div>
 
 <div class="card">
-<h3>📅 Guyyaa Gabaasaa</h3>
+<h3>📅 Gosa Gabaasaa Filadhu</h3>
+
+<div class="period">
+<button id="dailyBtn" onclick="setPeriod('daily')">Daily</button>
+<button id="weeklyBtn" onclick="setPeriod('weekly')">Weekly</button>
+<button id="monthlyBtn" onclick="setPeriod('monthly')">Monthly</button>
+<button id="customBtn" onclick="setPeriod('custom')">Custom</button>
+</div>
+
+<p id="periodLabel" class="muted">Gabaasa guyyaa har'aa</p>
+
 <label>Guyyaa jalqabaa</label>
 <input type="date" id="startDate">
+
 <label>Guyyaa xumuraa</label>
 <input type="date" id="endDate">
+
 <button onclick="loadReport()">Gabaasa Ilaali</button>
-<button onclick="window.print()" style="background:#285f91">Print</button>
+<button class="secondary" onclick="window.print()">Print</button>
+
 <p id="message" class="muted"></p>
 </div>
 
@@ -93,7 +114,11 @@ th{background:#edf2f7}
 
 <div class="card">
 <h3>📋 Odeeffannoo</h3>
-<p class="muted">Gabaasni kun ajajawwan Served qofa lakkaa'a. Pending fi Cancelled hin dabalaman.</p>
+<p class="muted">
+Gabaasni kun ajajawwan Served qofa lakkaa'a.
+Pending fi Cancelled hin dabalaman.
+</p>
+<p id="rangeInfo" class="muted"></p>
 </div>
 
 </div>
@@ -103,11 +128,18 @@ const SUPABASE_URL = "https://wyesygvwhlmrefqcridg.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
 const HOTEL_ID = "0be7a002-21fb-4af0-8ac7-7771ba63f609";
 
-const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const db = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
 
-const money = n => Number(n || 0).toLocaleString("en-US",{
- minimumFractionDigits:2,maximumFractionDigits:2
-}) + " ETB";
+let currentPeriod = "daily";
+
+const money = n =>
+ Number(n || 0).toLocaleString("en-US",{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+ }) + " ETB";
 
 function localDate(d){
  const y=d.getFullYear();
@@ -116,9 +148,63 @@ function localDate(d){
  return `${y}-${m}-${day}`;
 }
 
-const today = localDate(new Date());
-document.getElementById("startDate").value=today;
-document.getElementById("endDate").value=today;
+function parseDate(value){
+ const parts=value.split("-").map(Number);
+ return new Date(parts[0],parts[1]-1,parts[2]);
+}
+
+function setDates(period){
+ const today=new Date();
+ let start=new Date(today);
+ let end=new Date(today);
+
+ if(period==="weekly"){
+  const day=today.getDay();
+  const diff=day===0?-6:1-day;
+  start.setDate(today.getDate()+diff);
+  end=new Date(start);
+  end.setDate(start.getDate()+6);
+ }
+
+ if(period==="monthly"){
+  start=new Date(today.getFullYear(),today.getMonth(),1);
+  end=new Date(today.getFullYear(),today.getMonth()+1,0);
+ }
+
+ document.getElementById("startDate").value=localDate(start);
+ document.getElementById("endDate").value=localDate(end);
+
+ const labels={
+  daily:"Gabaasa guyyaa har'aa",
+  weekly:"Gabaasa torbee kanaa (Wiixata hanga Dilbata)",
+  monthly:"Gabaasa ji'a kanaa",
+  custom:"Guyyaa ofii filadhu"
+ };
+
+ document.getElementById("periodLabel").textContent=labels[period];
+
+ ["daily","weekly","monthly","custom"].forEach(p=>{
+  document.getElementById(p+"Btn").classList.toggle(
+   "active",p===period
+  );
+ });
+}
+
+function setPeriod(period){
+ currentPeriod=period;
+ setDates(period);
+ if(period!=="custom") loadReport();
+}
+
+function showEmpty(){
+ document.getElementById("restaurantTotal").textContent=money(0);
+ document.getElementById("barTotal").textContent=money(0);
+ document.getElementById("grandTotal").textContent=money(0);
+ document.getElementById("orderCount").textContent="0";
+ document.getElementById("itemCount").textContent="0";
+ document.getElementById("reportRows").innerHTML=
+  '<tr><td colspan="4">Meeshaan hin jiru.</td></tr>';
+}
 
 async function loadReport(){
  const msg=document.getElementById("message");
@@ -127,21 +213,24 @@ async function loadReport(){
 
  if(!start || !end || start>end){
   msg.textContent="Guyyaa sirrii filadhu.";
+  msg.className="error";
   return;
  }
 
  msg.textContent="Gabaasni fe'amaa jira...";
+ msg.className="muted";
 
  try{
-  const from=new Date(start+"T00:00:00").toISOString();
-  const until=new Date(end+"T23:59:59.999").toISOString();
+  // Ethiopia local time: UTC+3
+  const from=start+"T00:00:00+03:00";
+  const until=end+"T23:59:59.999+03:00";
 
   const {data:orders,error:orderError}=await db
    .from("restaurant_orders")
    .select("id,status,created_at")
    .eq("hotel_id",HOTEL_ID)
-   .gte("created_at",from)
-   .lte("created_at",until);
+   .gte("created_at",new Date(from).toISOString())
+   .lte("created_at",new Date(until).toISOString());
 
   if(orderError) throw orderError;
 
@@ -152,6 +241,8 @@ async function loadReport(){
   if(served.length===0){
    showEmpty();
    msg.textContent="Guyyaa kana keessatti ajajni Served hin jiru.";
+   document.getElementById("rangeInfo").textContent=
+    "Guyyaa: "+start+" hanga "+end;
    return;
   }
 
@@ -166,7 +257,9 @@ async function loadReport(){
   if(itemError) throw itemError;
 
   const grouped={};
-  let restaurantTotal=0,barTotal=0,itemCount=0;
+  let restaurantTotal=0;
+  let barTotal=0;
+  let itemCount=0;
 
   (items||[]).forEach(item=>{
    const source=String(item.item_source||"").toLowerCase();
@@ -174,10 +267,18 @@ async function loadReport(){
    const key=type+"|"+item.item_name;
 
    const qty=Number(item.quantity||0);
-   const amount=Number(item.subtotal||qty*Number(item.unit_price||0));
+   const amount=item.subtotal!==null &&
+    item.subtotal!==undefined
+    ? Number(item.subtotal)
+    : qty*Number(item.unit_price||0);
 
    if(!grouped[key]){
-    grouped[key]={name:item.item_name,type,quantity:0,total:0};
+    grouped[key]={
+     name:item.item_name,
+     type:type,
+     quantity:0,
+     total:0
+    };
    }
 
    grouped[key].quantity+=qty;
@@ -189,29 +290,46 @@ async function loadReport(){
   });
 
   const rows=Object.values(grouped).sort((a,b)=>
-   a.type.localeCompare(b.type)||a.name.localeCompare(b.name)
+   a.type.localeCompare(b.type)||
+   a.name.localeCompare(b.name)
   );
 
-  document.getElementById("restaurantTotal").textContent=money(restaurantTotal);
-  document.getElementById("barTotal").textContent=money(barTotal);
-  document.getElementById("grandTotal").textContent=money(restaurantTotal+barTotal);
-  document.getElementById("orderCount").textContent=served.length;
-  document.getElementById("itemCount").textContent=itemCount;
+  document.getElementById("restaurantTotal").textContent=
+   money(restaurantTotal);
+
+  document.getElementById("barTotal").textContent=
+   money(barTotal);
+
+  document.getElementById("grandTotal").textContent=
+   money(restaurantTotal+barTotal);
+
+  document.getElementById("orderCount").textContent=
+   served.length;
+
+  document.getElementById("itemCount").textContent=
+   itemCount;
 
   const tbody=document.getElementById("reportRows");
   tbody.innerHTML="";
 
   rows.forEach(item=>{
    const tr=document.createElement("tr");
-   [item.name,item.type,item.quantity,money(item.total)].forEach(value=>{
+
+   [item.name,item.type,item.quantity,money(item.total)]
+   .forEach(value=>{
     const td=document.createElement("td");
     td.textContent=value;
     tr.appendChild(td);
    });
+
    tbody.appendChild(tr);
   });
 
+  document.getElementById("rangeInfo").textContent=
+   "Guyyaa: "+start+" hanga "+end;
+
   msg.textContent="Gabaasni milkaa'inaan fe'ameera.";
+  msg.className="muted";
 
  }catch(error){
   console.error(error);
@@ -220,17 +338,27 @@ async function loadReport(){
  }
 }
 
-function showEmpty(){
- document.getElementById("restaurantTotal").textContent=money(0);
- document.getElementById("barTotal").textContent=money(0);
- document.getElementById("grandTotal").textContent=money(0);
- document.getElementById("orderCount").textContent="0";
- document.getElementById("itemCount").textContent="0";
- document.getElementById("reportRows").innerHTML=
-  '<tr><td colspan="4">Meeshaan hin jiru.</td></tr>';
+document.getElementById("startDate").addEventListener("change",()=>{
+ currentPeriod="custom";
+ setPeriodButtons();
+});
+
+document.getElementById("endDate").addEventListener("change",()=>{
+ currentPeriod="custom";
+ setPeriodButtons();
+});
+
+function setPeriodButtons(){
+ ["daily","weekly","monthly","custom"].forEach(p=>{
+  document.getElementById(p+"Btn").classList.toggle(
+   "active",p===currentPeriod
+  );
+ });
+ document.getElementById("periodLabel").textContent=
+  "Guyyaa ofii filadhu";
 }
 
-loadReport();
+setPeriod("daily");
 </script>
 </body>
 </html>
