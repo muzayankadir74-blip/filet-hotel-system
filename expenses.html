@@ -1,0 +1,352 @@
+
+<!DOCTYPE html>
+<html lang="om">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yooyyaa Hotel System - Expenses Management</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:15px;
+  font-family:Arial,sans-serif;
+  background:#f3f6fa;
+  color:#1d2939;
+}
+.container{
+  max-width:850px;
+  margin:auto;
+}
+.header{
+  background:#102b4e;
+  color:white;
+  padding:20px;
+  border-radius:12px;
+  text-align:center;
+}
+.header h2{margin:0 0 8px}
+.card{
+  background:white;
+  padding:18px;
+  margin-top:16px;
+  border-radius:12px;
+  box-shadow:0 2px 8px #00000010;
+}
+label{
+  display:block;
+  margin-top:12px;
+  font-weight:bold;
+}
+input,select,textarea{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  border:1px solid #ccd5e0;
+  border-radius:7px;
+  font-size:16px;
+}
+button{
+  border:0;
+  padding:12px 16px;
+  border-radius:7px;
+  background:#102b4e;
+  color:white;
+  font-size:15px;
+  cursor:pointer;
+  margin-top:12px;
+}
+button:disabled{opacity:.6}
+.back{
+  display:inline-block;
+  color:#102b4e;
+  text-decoration:none;
+  font-weight:bold;
+  margin:15px 0;
+}
+.total{
+  background:#e8f1ff;
+  padding:18px;
+  border-radius:10px;
+  text-align:center;
+}
+.total h2{margin:8px 0;color:#102b4e}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+  min-width:600px;
+}
+th,td{
+  padding:11px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+}
+th{background:#edf2f7}
+.table-wrap{overflow-x:auto}
+.message{margin-top:12px;font-weight:bold}
+.success{color:green}
+.error{color:#c62828}
+@media print{
+  .no-print,.back{display:none!important}
+  body{background:white}
+  .card{box-shadow:none}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="header">
+  <h2>Yooyyaa Hotel System</h2>
+  <div>Expenses Management — Bulchiinsa Baasii</div>
+</div>
+
+<a class="back" href="./dashboard.html">← Gara Dashboard</a>
+
+<div class="card">
+  <h3>💸 Baasii Haaraa Galmeessi</h3>
+
+  <form id="expenseForm">
+
+    <label>Guyyaa Baasii</label>
+    <input type="date" id="expenseDate" required>
+
+    <label>Gosa Baasii</label>
+    <select id="category" required>
+      <option value="">Gosa filadhu</option>
+      <option>Food & Kitchen</option>
+      <option>Salary</option>
+      <option>Electricity</option>
+      <option>Water</option>
+      <option>Internet</option>
+      <option>Maintenance</option>
+      <option>Cleaning</option>
+      <option>Transport</option>
+      <option>Fuel</option>
+      <option>Restaurant</option>
+      <option>Bar</option>
+      <option>Other</option>
+    </select>
+
+    <label>Baay'ina Baasii (ETB)</label>
+    <input type="number" id="amount" min="0.01" step="0.01"
+      placeholder="Fakkeenya: 500" required>
+
+    <label>Ibsa Baasii</label>
+    <textarea id="description" rows="3"
+      placeholder="Baasii kanaaf maaliif kaffalame?"></textarea>
+
+    <button type="submit" id="saveBtn">💾 Baasii Galmeessi</button>
+    <div id="message" class="message"></div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>📊 Gabaasa Baasii</h3>
+
+  <label>Guyyaa Filadhu</label>
+  <input type="date" id="filterDate">
+
+  <button type="button" id="filterBtn" class="no-print">
+    Gabaasa Ilaali
+  </button>
+
+  <button type="button" id="allBtn" class="no-print">
+    Baasii Hunda
+  </button>
+
+  <div class="total">
+    <div>Waliigala Baasii</div>
+    <h2 id="totalAmount">0.00 ETB</h2>
+    <div id="expenseCount">Baasii 0</div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Guyyaa</th>
+          <th>Gosa</th>
+          <th>Ibsa</th>
+          <th>Baay'ina (ETB)</th>
+        </tr>
+      </thead>
+      <tbody id="expenseList">
+        <tr><td colspan="4">Baasii fe'amaa jira...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button onclick="window.print()" class="no-print">
+    🖨️ Print
+  </button>
+
+  <div id="reportMessage" class="message"></div>
+</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://wyesygvwhlmrefqcridg.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+
+const HOTEL_ID = "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const form = document.getElementById("expenseForm");
+const message = document.getElementById("message");
+const saveBtn = document.getElementById("saveBtn");
+
+const today = new Date().toLocaleDateString("en-CA");
+document.getElementById("expenseDate").value = today;
+
+async function checkLogin(){
+  const {data, error} = await supabaseClient.auth.getSession();
+
+  if(error || !data.session){
+    window.location.href = "./hotel-login.html";
+    return false;
+  }
+  return true;
+}
+
+form.addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  if(!(await checkLogin())) return;
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving...";
+
+  message.textContent = "";
+
+  const expense = {
+    hotel_id: HOTEL_ID,
+    expense_date: document.getElementById("expenseDate").value,
+    category: document.getElementById("category").value,
+    amount: Number(document.getElementById("amount").value),
+    description: document.getElementById("description").value.trim() || null
+  };
+
+  const {error} = await supabaseClient
+    .from("expenses")
+    .insert([expense]);
+
+  if(error){
+    message.textContent = "Dogoggora: " + error.message;
+    message.className = "message error";
+  }else{
+    message.textContent = "Baasii milkaa'inaan galmaa'eera!";
+    message.className = "message success";
+
+    form.reset();
+    document.getElementById("expenseDate").value = today;
+
+    await loadExpenses();
+  }
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = "💾 Baasii Galmeessi";
+});
+
+async function loadExpenses(selectedDate = ""){
+  const list = document.getElementById("expenseList");
+  const reportMessage = document.getElementById("reportMessage");
+
+  list.innerHTML = "<tr><td colspan='4'>Fe'amaa jira...</td></tr>";
+
+  let query = supabaseClient
+    .from("expenses")
+    .select("*")
+    .eq("hotel_id", HOTEL_ID)
+    .order("expense_date", {ascending:false})
+    .order("created_at", {ascending:false});
+
+  if(selectedDate){
+    query = query.eq("expense_date", selectedDate);
+  }
+
+  const {data, error} = await query;
+
+  if(error){
+    list.innerHTML = "<tr><td colspan='4'>Dogoggora: " +
+      error.message + "</td></tr>";
+    reportMessage.textContent = error.message;
+    reportMessage.className = "message error";
+    return;
+  }
+
+  reportMessage.textContent = "";
+
+  let total = 0;
+
+  if(!data || data.length === 0){
+    list.innerHTML = "<tr><td colspan='4'>Baasii hin argamne.</td></tr>";
+  }else{
+    list.innerHTML = "";
+
+    data.forEach(item => {
+      total += Number(item.amount);
+
+      const tr = document.createElement("tr");
+
+      const date = document.createElement("td");
+      date.textContent = item.expense_date || "";
+
+      const category = document.createElement("td");
+      category.textContent = item.category || "";
+
+      const description = document.createElement("td");
+      description.textContent = item.description || "-";
+
+      const amount = document.createElement("td");
+      amount.textContent = Number(item.amount).toFixed(2);
+
+      tr.append(date, category, description, amount);
+      list.appendChild(tr);
+    });
+  }
+
+  document.getElementById("totalAmount").textContent =
+    total.toLocaleString("en-US", {
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }) + " ETB";
+
+  document.getElementById("expenseCount").textContent =
+    "Baasii " + (data ? data.length : 0);
+}
+
+document.getElementById("filterBtn").addEventListener("click", function(){
+  const date = document.getElementById("filterDate").value;
+
+  if(!date){
+    alert("Maaloo guyyaa filadhu.");
+    return;
+  }
+
+  loadExpenses(date);
+});
+
+document.getElementById("allBtn").addEventListener("click", function(){
+  document.getElementById("filterDate").value = "";
+  loadExpenses();
+});
+
+(async function init(){
+  if(await checkLogin()){
+    loadExpenses();
+  }
+})();
+</script>
+</body>
+</html>
