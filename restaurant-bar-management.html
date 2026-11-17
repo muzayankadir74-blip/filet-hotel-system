@@ -31,11 +31,15 @@ th,td{padding:11px 8px;border-bottom:1px solid #e5eaf0;text-align:left}
 th{background:#edf2f7}
 .note{color:#5d6b7a;font-size:14px;line-height:1.5}
 #message{margin-top:12px;font-weight:bold;line-height:1.5;overflow-wrap:anywhere}
-.hidden{display:none}
-@media(max-width:500px){.panel{padding:13px}header h1{font-size:20px}}
+@media(max-width:500px){
+ .panel{padding:13px}
+ header h1{font-size:20px}
+ .tabs button{padding:12px 5px;font-size:14px}
+}
 </style>
 </head>
 <body>
+
 <header>
 <h1>Yooyyaa Hotel System</h1>
 <p>Restaurant & Bar Management — Bulchiinsa Nyaataa fi Baar</p>
@@ -70,8 +74,9 @@ th{background:#edf2f7}
 <label for="itemPrice">Gatii tokkoo (ETB)</label>
 <input id="itemPrice" type="number" min="0" step="0.01" required placeholder="Fakkeenya: 250">
 
-<button type="submit" id="saveButton">Meeshaa Galmeessi</button>
+<button type="submit" id="saveButton">Nyaata Galmeessi</button>
 </form>
+
 <p id="message" role="status"></p>
 </section>
 
@@ -100,7 +105,7 @@ th{background:#edf2f7}
 
 <section class="panel">
 <h2>📋 Ajaja Maamilaa</h2>
-<p class="note">Ajajawwan nyaataa ilaaluuf fuula Restaurant Orders bani.</p>
+<p class="note">Ajajawwan maamilaa ilaaluuf fuula Restaurant Orders bani.</p>
 <a class="back" href="restaurant-orders.html">Gara Restaurant Orders →</a>
 </section>
 </main>
@@ -112,48 +117,52 @@ const HOTEL_ID="0be7a002-21fb-4af0-8ac7-7771ba63f609";
 const AUTHORIZED_USER_ID="5541bd2d-27fa-4a83-9f3e-60215daecf20";
 const LOGIN_PAGE="./hotel-login.html";
 
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 
+let db=null;
 let currentUser=null;
 let currentType="restaurant";
+let pageReady=false;
 
 const settings={
  restaurant:{
   table:"restaurant_items",
-  title:"Nyaata",
   categories:["Breakfast","Lunch","Dinner","Snack","Other"]
  },
  bar:{
   table:"bar_items",
-  title:"Meeshaa Baar",
   categories:["Dhugaatii","Nyaata salphaa","Meeshaa biraa"]
  }
 };
 
-function showMessage(text,error=false){
- $("message").textContent=text;
+function showMessage(message,error=false){
+ $("message").textContent=message;
  $("message").style.color=error?"#b42318":"#087f5b";
 }
 
 function setType(type){
+ if(type!=="restaurant" && type!=="bar")return;
+
  currentType=type;
  const config=settings[type];
 
  $("restaurantTab").classList.toggle("active",type==="restaurant");
  $("barTab").classList.toggle("active",type==="bar");
 
- $("formTitle").textContent=type==="restaurant"?"➕ Nyaata Galmeessi":"➕ Meeshaa Baar Galmeessi";
- $("listTitle").textContent=type==="restaurant"?"🍽️ Tarree Nyaataa":"🥤 Tarree Meeshaalee Baar";
- $("saveButton").textContent=type==="restaurant"?"Nyaata Galmeessi":"Meeshaa Galmeessi";
- $("itemName").placeholder=type==="restaurant"?"Fakkeenya: Injera firfir":"Fakkeenya: Bishaan";
+ $("formTitle").textContent=
+  type==="restaurant"?"➕ Nyaata Galmeessi":"➕ Meeshaa Baar Galmeessi";
+
+ $("listTitle").textContent=
+  type==="restaurant"?"🍽️ Tarree Nyaataa":"🥤 Tarree Meeshaalee Baar";
+
+ $("saveButton").textContent=
+  type==="restaurant"?"Nyaata Galmeessi":"Meeshaa Galmeessi";
+
+ $("itemName").placeholder=
+  type==="restaurant"?"Fakkeenya: Injera firfir":"Fakkeenya: Bishaan";
 
  const select=$("itemCategory");
- select.replaceChildren();
- const first=document.createElement("option");
- first.value="";
- first.textContent="Gosa filadhu";
- select.appendChild(first);
+ select.innerHTML='<option value="">Gosa filadhu</option>';
 
  config.categories.forEach(category=>{
   const option=document.createElement("option");
@@ -164,13 +173,14 @@ function setType(type){
 
  $("itemForm").reset();
  showMessage("");
- loadItems();
+
+ if(pageReady)loadItems();
 }
 
 async function checkLogin(){
  const {data,error}=await db.auth.getSession();
 
- if(error||!data.session){
+ if(error || !data.session){
   window.location.replace(LOGIN_PAGE);
   return false;
  }
@@ -179,16 +189,23 @@ async function checkLogin(){
 
  if(currentUser.id!==AUTHORIZED_USER_ID){
   showMessage("Fayyadamaan kun mirga fuula kanaa hin qabu.",true);
-  $("itemForm").querySelectorAll("input,select,button").forEach(el=>el.disabled=true);
+  $("itemForm").querySelectorAll("input,select,button")
+   .forEach(el=>el.disabled=true);
+  $("restaurantTab").disabled=true;
+  $("barTab").disabled=true;
   $("refreshButton").disabled=true;
   return false;
  }
+
  return true;
 }
 
 async function loadItems(){
+ if(!db || !pageReady)return;
+
  const config=settings[currentType];
- $("itemList").innerHTML='<tr><td colspan="5">Meeshaalee fe'aa jira...</td></tr>';
+ $("itemList").innerHTML=
+  '<tr><td colspan="5">Meeshaalee fe’aa jira...</td></tr>';
 
  const {data,error}=await db
   .from(config.table)
@@ -197,7 +214,9 @@ async function loadItems(){
   .order("created_at",{ascending:false});
 
  if(error){
-  $("itemList").innerHTML='<tr><td colspan="5">Odeeffannoo argachuun hin danda'amne.</td></tr>';
+  $("itemList").innerHTML=
+   '<tr><td colspan="5">Odeeffannoo argachuun hin danda’amne.</td></tr>';
+  $("itemCount").textContent="Meeshaalee galmaa'an: 0";
   showMessage("Dogoggora: "+error.message,true);
   return;
  }
@@ -207,7 +226,7 @@ async function loadItems(){
 
 function renderItems(items){
  const body=$("itemList");
- body.replaceChildren();
+ body.innerHTML="";
  $("itemCount").textContent="Meeshaalee galmaa'an: "+items.length;
 
  if(items.length===0){
@@ -220,12 +239,14 @@ function renderItems(items){
 
  items.forEach(item=>{
   const row=body.insertRow();
+
   row.insertCell().textContent=item.name;
   row.insertCell().textContent=item.category||"-";
   row.insertCell().textContent=item.quantity;
 
   row.insertCell().textContent=Number(item.price).toLocaleString("en-US",{
-   minimumFractionDigits:2,maximumFractionDigits:2
+   minimumFractionDigits:2,
+   maximumFractionDigits:2
   });
 
   const action=row.insertCell();
@@ -251,8 +272,8 @@ $("itemForm").addEventListener("submit",async event=>{
  const quantity=Number($("itemQuantity").value);
  const price=Number($("itemPrice").value);
 
- if(!name||!category||!Number.isInteger(quantity)||quantity<0||
-    !Number.isFinite(price)||price<0){
+ if(!name || !category || !Number.isInteger(quantity) ||
+    quantity<0 || !Number.isFinite(price) || price<0){
   showMessage("Maaloo odeeffannoo sirrii guuti.",true);
   return;
  }
@@ -263,10 +284,10 @@ $("itemForm").addEventListener("submit",async event=>{
 
  const {error}=await db.from(config.table).insert([{
   hotel_id:HOTEL_ID,
-  name,
-  category,
-  quantity,
-  price,
+  name:name,
+  category:category,
+  quantity:quantity,
+  price:price,
   is_available:true
  }]);
 
@@ -303,19 +324,35 @@ async function deleteItem(id,button){
  await loadItems();
 }
 
-$("restaurantTab").addEventListener("click",()=>setType("restaurant"));
-$("barTab").addEventListener("click",()=>setType("bar"));
-$("refreshButton").addEventListener("click",loadItems);
+$("restaurantTab").addEventListener("click",function(){
+ setType("restaurant");
+});
 
-db.auth.onAuthStateChange((event,session)=>{
- if(event==="SIGNED_OUT"||!session){
-  window.location.replace(LOGIN_PAGE);
- }
+$("barTab").addEventListener("click",function(){
+ setType("bar");
+});
+
+$("refreshButton").addEventListener("click",function(){
+ loadItems();
 });
 
 async function startPage(){
- const loggedIn=await checkLogin();
- if(loggedIn)setType("restaurant");
+ try{
+  if(!window.supabase){
+   showMessage("Supabase hin fe'amne. Internet kee ilaali.",true);
+   return;
+  }
+
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+  const loggedIn=await checkLogin();
+  if(!loggedIn)return;
+
+  pageReady=true;
+  setType("restaurant");
+ }catch(error){
+  showMessage("Dogoggora: "+error.message,true);
+ }
 }
 
 startPage();
