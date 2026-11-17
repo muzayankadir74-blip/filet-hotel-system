@@ -1,0 +1,244 @@
+
+<!DOCTYPE html>
+<html lang="om">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yooyyaa Hotel System - Net Profit Report</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:15px;font-family:Arial,sans-serif;background:#f3f6fa;color:#243247}
+.container{max-width:850px;margin:auto}
+header{background:#102b4e;color:white;padding:20px;border-radius:12px;margin-bottom:15px}
+h2{margin:0 0 8px}
+.panel,.result{background:white;padding:16px;border-radius:12px;margin-bottom:15px;box-shadow:0 2px 8px #0000000c}
+label{display:block;margin:12px 0 6px;font-weight:bold}
+select,input{width:100%;padding:12px;border:1px solid #ccd4df;border-radius:8px;font-size:16px}
+button,.back{display:inline-block;padding:12px 18px;border:0;border-radius:8px;background:#102b4e;color:white;font-size:15px;text-decoration:none;margin-top:12px;cursor:pointer}
+button{width:100%}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{padding:14px;background:#f3f6fa;border-radius:9px}
+.card small{color:#65748a}
+.card strong{display:block;font-size:20px;margin-top:8px}
+.total{background:#e8f1ff}
+.profit{background:#e6f7ed}
+.loss{background:#ffe9e9}
+.status{padding:10px;border-radius:8px;background:#eef3f8;margin-top:12px}
+@media(max-width:480px){.grid{grid-template-columns:1fr 1fr}.card strong{font-size:17px}}
+@media print{body{background:white}.no-print{display:none!important}.panel,.result{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+<h2>Yooyyaa Hotel System</h2>
+<div>Net Profit Report — Gabaasa Bu'aa Qulqulluu</div>
+</header>
+
+<div class="panel no-print">
+<a class="back" href="./dashboard.html">← Dashboard</a>
+
+<label>Gosa Gabaasaa</label>
+<select id="period">
+<option value="daily">Daily — Guyyaa</option>
+<option value="weekly">Weekly — Torban</option>
+<option value="monthly">Monthly — Ji'a</option>
+<option value="custom">Custom — Guyyaa filatame</option>
+</select>
+
+<label>Guyyaa Jalqabaa</label>
+<input type="date" id="startDate">
+
+<label>Guyyaa Xumuraa</label>
+<input type="date" id="endDate">
+
+<button onclick="loadReport()">Gabaasa Ilaali</button>
+<button onclick="window.print()">Print</button>
+<div id="message" class="status">Gabaasa fe'uuf cuqaasi.</div>
+</div>
+
+<div class="result">
+<h3>Gabaasa Galii fi Baasii</h3>
+<p id="reportPeriod">Guyyaa gabaasaa</p>
+
+<div class="grid">
+<div class="card">
+<small>Room Payments</small>
+<strong id="roomIncome">0.00 ETB</strong>
+</div>
+<div class="card">
+<small>Restaurant Sales</small>
+<strong id="restaurantIncome">0.00 ETB</strong>
+</div>
+<div class="card">
+<small>Bar Sales</small>
+<strong id="barIncome">0.00 ETB</strong>
+</div>
+<div class="card total">
+<small>Total Income — Galii Waliigalaa</small>
+<strong id="totalIncome">0.00 ETB</strong>
+</div>
+<div class="card">
+<small>Total Expenses — Baasii</small>
+<strong id="totalExpenses">0.00 ETB</strong>
+</div>
+<div class="card profit" id="profitCard">
+<small>Net Profit — Bu'aa Qulqulluu</small>
+<strong id="netProfit">0.00 ETB</strong>
+</div>
+</div>
+</div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://wyesygvwhlmrefqcridg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+const HOTEL_ID = "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const money = n => Number(n || 0).toLocaleString("en-US",{
+ minimumFractionDigits:2,maximumFractionDigits:2
+})+" ETB";
+
+function localDate(d){
+ const y=d.getFullYear();
+ const m=String(d.getMonth()+1).padStart(2,"0");
+ const day=String(d.getDate()).padStart(2,"0");
+ return `${y}-${m}-${day}`;
+}
+
+function setDates(){
+ const today=new Date();
+ let start=new Date(today);
+ const period=document.getElementById("period").value;
+
+ if(period==="weekly"){
+   start.setDate(today.getDate()-today.getDay());
+ }else if(period==="monthly"){
+   start=new Date(today.getFullYear(),today.getMonth(),1);
+ }else if(period==="custom"){
+   return;
+ }
+
+ document.getElementById("startDate").value=localDate(start);
+ document.getElementById("endDate").value=localDate(today);
+}
+
+document.getElementById("period").addEventListener("change",setDates);
+setDates();
+
+function dateBoundary(date, next=false){
+ const parts=date.split("-").map(Number);
+ const d=new Date(parts[0],parts[1]-1,parts[2]);
+ if(next)d.setDate(d.getDate()+1);
+ return d.toISOString();
+}
+
+async function loadReport(){
+ const message=document.getElementById("message");
+ const start=document.getElementById("startDate").value;
+ const end=document.getElementById("endDate").value;
+
+ if(!start || !end || start>end){
+   message.textContent="Guyyaa sirrii filadhu.";
+   return;
+ }
+
+ message.textContent="Gabaasni fe'amaa jira...";
+
+ try{
+   const from=dateBoundary(start);
+   const to=dateBoundary(end,true);
+
+   // 1. Room payments
+   const {data:payments,error:paymentError}=await db
+    .from("payments")
+    .select("amount")
+    .eq("hotel_id",HOTEL_ID)
+    .gte("created_at",from)
+    .lt("created_at",to);
+
+   if(paymentError)throw paymentError;
+
+   const roomTotal=(payments||[]).reduce(
+    (sum,row)=>sum+Number(row.amount||0),0
+   );
+
+   // 2. Served restaurant and bar orders
+   const {data:orders,error:orderError}=await db
+    .from("restaurant_orders")
+    .select("id")
+    .eq("hotel_id",HOTEL_ID)
+    .eq("status","Served")
+    .gte("created_at",from)
+    .lt("created_at",to);
+
+   if(orderError)throw orderError;
+
+   let restaurantTotal=0;
+   let barTotal=0;
+
+   const orderIds=(orders||[]).map(order=>order.id);
+
+   if(orderIds.length>0){
+     const {data:items,error:itemError}=await db
+      .from("restaurant_order_items")
+      .select("item_source,subtotal")
+      .in("order_id",orderIds);
+
+     if(itemError)throw itemError;
+
+     (items||[]).forEach(item=>{
+       const amount=Number(item.subtotal||0);
+       if(item.item_source==="restaurant"){
+         restaurantTotal+=amount;
+       }else if(item.item_source==="bar"){
+         barTotal+=amount;
+       }
+     });
+   }
+
+   // 3. Expenses
+   const {data:expenses,error:expenseError}=await db
+    .from("expenses")
+    .select("amount")
+    .eq("hotel_id",HOTEL_ID)
+    .gte("expense_date",start)
+    .lte("expense_date",end);
+
+   if(expenseError)throw expenseError;
+
+   const expenseTotal=(expenses||[]).reduce(
+    (sum,row)=>sum+Number(row.amount||0),0
+   );
+
+   const income=roomTotal+restaurantTotal+barTotal;
+   const profit=income-expenseTotal;
+
+   document.getElementById("roomIncome").textContent=money(roomTotal);
+   document.getElementById("restaurantIncome").textContent=money(restaurantTotal);
+   document.getElementById("barIncome").textContent=money(barTotal);
+   document.getElementById("totalIncome").textContent=money(income);
+   document.getElementById("totalExpenses").textContent=money(expenseTotal);
+   document.getElementById("netProfit").textContent=money(profit);
+
+   const profitCard=document.getElementById("profitCard");
+   profitCard.className="card "+(profit>=0?"profit":"loss");
+
+   document.getElementById("reportPeriod").textContent=
+    "From "+start+" To "+end;
+
+   message.textContent="Gabaasni milkaa'inaan fe'ameera.";
+
+ }catch(error){
+   console.error(error);
+   message.textContent="Dogoggorri uumame: "+(error.message||"Data hin argamne.");
+ }
+}
+</script>
+</body>
+</html>
