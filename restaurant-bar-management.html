@@ -1,0 +1,324 @@
+
+<!DOCTYPE html>
+<html lang="om">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yooyyaa Hotel System - Restaurant & Bar Management</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#17324d}
+header{background:#102b4e;color:white;padding:22px 16px;text-align:center}
+header h1{margin:0 0 8px;font-size:23px}
+header p{margin:0;font-size:14px}
+main{max-width:900px;margin:20px auto;padding:0 14px 30px}
+.panel{background:white;padding:18px;margin-bottom:16px;border-radius:12px;box-shadow:0 2px 8px #0000000d}
+h2{margin-top:0;font-size:19px}
+label{display:block;margin:12px 0 6px;font-weight:bold}
+input,select{width:100%;padding:12px;border:1px solid #ccd5df;border-radius:8px;font-size:16px;background:white}
+button,.back{display:inline-block;border:0;border-radius:8px;padding:12px 16px;margin-top:14px;background:#087f5b;color:white;font-size:15px;text-decoration:none;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.back{background:#102b4e}
+.tabs{display:flex;gap:10px;margin:15px 0}
+.tabs button{flex:1;margin:0;background:#dce5ef;color:#17324d}
+.tabs button.active{background:#087f5b;color:white}
+.refresh{background:#245b91}
+.delete{background:#b42318;margin:0;padding:8px 10px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th,td{padding:11px 8px;border-bottom:1px solid #e5eaf0;text-align:left}
+th{background:#edf2f7}
+.note{color:#5d6b7a;font-size:14px;line-height:1.5}
+#message{margin-top:12px;font-weight:bold;line-height:1.5;overflow-wrap:anywhere}
+.hidden{display:none}
+@media(max-width:500px){.panel{padding:13px}header h1{font-size:20px}}
+</style>
+</head>
+<body>
+<header>
+<h1>Yooyyaa Hotel System</h1>
+<p>Restaurant & Bar Management — Bulchiinsa Nyaataa fi Baar</p>
+</header>
+
+<main>
+<p><a class="back" href="dashboard.html">← Gara Dashboard</a></p>
+
+<section class="panel">
+<h2>Bulchiinsa Meeshaalee</h2>
+<p class="note">Nyaataa fi dhugaatii bakka tokko irraa galmeessi, ilaali, haqi.</p>
+
+<div class="tabs">
+<button type="button" id="restaurantTab" class="active">🍽️ Restaurant</button>
+<button type="button" id="barTab">🥤 Bar</button>
+</div>
+
+<h2 id="formTitle">➕ Nyaata Galmeessi</h2>
+
+<form id="itemForm">
+<label for="itemName">Maqaa meeshaa</label>
+<input id="itemName" required placeholder="Fakkeenya: Injera firfir">
+
+<label for="itemCategory">Gosa</label>
+<select id="itemCategory" required>
+<option value="">Gosa filadhu</option>
+</select>
+
+<label for="itemQuantity">Baay'ina jiru</label>
+<input id="itemQuantity" type="number" min="0" step="1" required placeholder="Fakkeenya: 10">
+
+<label for="itemPrice">Gatii tokkoo (ETB)</label>
+<input id="itemPrice" type="number" min="0" step="0.01" required placeholder="Fakkeenya: 250">
+
+<button type="submit" id="saveButton">Meeshaa Galmeessi</button>
+</form>
+<p id="message" role="status"></p>
+</section>
+
+<section class="panel">
+<h2 id="listTitle">🍽️ Tarree Nyaataa</h2>
+<p id="itemCount">Meeshaalee galmaa'an: 0</p>
+<button type="button" class="refresh" id="refreshButton">🔄 Tarree Haaromsi</button>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Maqaa</th>
+<th>Gosa</th>
+<th>Baay'ina</th>
+<th>Gatii (ETB)</th>
+<th>Gocha</th>
+</tr>
+</thead>
+<tbody id="itemList">
+<tr><td colspan="5">Eegaa...</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="panel">
+<h2>📋 Ajaja Maamilaa</h2>
+<p class="note">Ajajawwan nyaataa ilaaluuf fuula Restaurant Orders bani.</p>
+<a class="back" href="restaurant-orders.html">Gara Restaurant Orders →</a>
+</section>
+</main>
+
+<script>
+const SUPABASE_URL="https://wyesygvwhlmrefqcridg.supabase.co";
+const SUPABASE_KEY="sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+const HOTEL_ID="0be7a002-21fb-4af0-8ac7-7771ba63f609";
+const AUTHORIZED_USER_ID="5541bd2d-27fa-4a83-9f3e-60215daecf20";
+const LOGIN_PAGE="./hotel-login.html";
+
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+
+let currentUser=null;
+let currentType="restaurant";
+
+const settings={
+ restaurant:{
+  table:"restaurant_items",
+  title:"Nyaata",
+  categories:["Breakfast","Lunch","Dinner","Snack","Other"]
+ },
+ bar:{
+  table:"bar_items",
+  title:"Meeshaa Baar",
+  categories:["Dhugaatii","Nyaata salphaa","Meeshaa biraa"]
+ }
+};
+
+function showMessage(text,error=false){
+ $("message").textContent=text;
+ $("message").style.color=error?"#b42318":"#087f5b";
+}
+
+function setType(type){
+ currentType=type;
+ const config=settings[type];
+
+ $("restaurantTab").classList.toggle("active",type==="restaurant");
+ $("barTab").classList.toggle("active",type==="bar");
+
+ $("formTitle").textContent=type==="restaurant"?"➕ Nyaata Galmeessi":"➕ Meeshaa Baar Galmeessi";
+ $("listTitle").textContent=type==="restaurant"?"🍽️ Tarree Nyaataa":"🥤 Tarree Meeshaalee Baar";
+ $("saveButton").textContent=type==="restaurant"?"Nyaata Galmeessi":"Meeshaa Galmeessi";
+ $("itemName").placeholder=type==="restaurant"?"Fakkeenya: Injera firfir":"Fakkeenya: Bishaan";
+
+ const select=$("itemCategory");
+ select.replaceChildren();
+ const first=document.createElement("option");
+ first.value="";
+ first.textContent="Gosa filadhu";
+ select.appendChild(first);
+
+ config.categories.forEach(category=>{
+  const option=document.createElement("option");
+  option.value=category;
+  option.textContent=category;
+  select.appendChild(option);
+ });
+
+ $("itemForm").reset();
+ showMessage("");
+ loadItems();
+}
+
+async function checkLogin(){
+ const {data,error}=await db.auth.getSession();
+
+ if(error||!data.session){
+  window.location.replace(LOGIN_PAGE);
+  return false;
+ }
+
+ currentUser=data.session.user;
+
+ if(currentUser.id!==AUTHORIZED_USER_ID){
+  showMessage("Fayyadamaan kun mirga fuula kanaa hin qabu.",true);
+  $("itemForm").querySelectorAll("input,select,button").forEach(el=>el.disabled=true);
+  $("refreshButton").disabled=true;
+  return false;
+ }
+ return true;
+}
+
+async function loadItems(){
+ const config=settings[currentType];
+ $("itemList").innerHTML='<tr><td colspan="5">Meeshaalee fe'aa jira...</td></tr>';
+
+ const {data,error}=await db
+  .from(config.table)
+  .select("id,name,category,quantity,price,is_available")
+  .eq("hotel_id",HOTEL_ID)
+  .order("created_at",{ascending:false});
+
+ if(error){
+  $("itemList").innerHTML='<tr><td colspan="5">Odeeffannoo argachuun hin danda'amne.</td></tr>';
+  showMessage("Dogoggora: "+error.message,true);
+  return;
+ }
+
+ renderItems(data||[]);
+}
+
+function renderItems(items){
+ const body=$("itemList");
+ body.replaceChildren();
+ $("itemCount").textContent="Meeshaalee galmaa'an: "+items.length;
+
+ if(items.length===0){
+  const row=body.insertRow();
+  const cell=row.insertCell();
+  cell.colSpan=5;
+  cell.textContent="Meeshaan hin galmoofne.";
+  return;
+ }
+
+ items.forEach(item=>{
+  const row=body.insertRow();
+  row.insertCell().textContent=item.name;
+  row.insertCell().textContent=item.category||"-";
+  row.insertCell().textContent=item.quantity;
+
+  row.insertCell().textContent=Number(item.price).toLocaleString("en-US",{
+   minimumFractionDigits:2,maximumFractionDigits:2
+  });
+
+  const action=row.insertCell();
+  const button=document.createElement("button");
+  button.type="button";
+  button.className="delete";
+  button.textContent="Haqi";
+  button.addEventListener("click",()=>deleteItem(item.id,button));
+  action.appendChild(button);
+ });
+}
+
+$("itemForm").addEventListener("submit",async event=>{
+ event.preventDefault();
+
+ if(!currentUser){
+  showMessage("Maaloo dura seeni.",true);
+  return;
+ }
+
+ const name=$("itemName").value.trim();
+ const category=$("itemCategory").value;
+ const quantity=Number($("itemQuantity").value);
+ const price=Number($("itemPrice").value);
+
+ if(!name||!category||!Number.isInteger(quantity)||quantity<0||
+    !Number.isFinite(price)||price<0){
+  showMessage("Maaloo odeeffannoo sirrii guuti.",true);
+  return;
+ }
+
+ const config=settings[currentType];
+ $("saveButton").disabled=true;
+ showMessage("Meeshaa kuusaa jira...");
+
+ const {error}=await db.from(config.table).insert([{
+  hotel_id:HOTEL_ID,
+  name,
+  category,
+  quantity,
+  price,
+  is_available:true
+ }]);
+
+ $("saveButton").disabled=false;
+
+ if(error){
+  showMessage("Kuusuun hin danda'amne: "+error.message,true);
+  return;
+ }
+
+ $("itemForm").reset();
+ showMessage("Meeshaan milkaa'inaan galmaa'e.");
+ await loadItems();
+});
+
+async function deleteItem(id,button){
+ if(!confirm("Meeshaa kana haquu barbaaddaa?"))return;
+
+ button.disabled=true;
+ const config=settings[currentType];
+
+ const {error}=await db.from(config.table)
+  .delete()
+  .eq("id",id)
+  .eq("hotel_id",HOTEL_ID);
+
+ if(error){
+  button.disabled=false;
+  showMessage("Haqamuun hin danda'amne: "+error.message,true);
+  return;
+ }
+
+ showMessage("Meeshaan haqameera.");
+ await loadItems();
+}
+
+$("restaurantTab").addEventListener("click",()=>setType("restaurant"));
+$("barTab").addEventListener("click",()=>setType("bar"));
+$("refreshButton").addEventListener("click",loadItems);
+
+db.auth.onAuthStateChange((event,session)=>{
+ if(event==="SIGNED_OUT"||!session){
+  window.location.replace(LOGIN_PAGE);
+ }
+});
+
+async function startPage(){
+ const loggedIn=await checkLogin();
+ if(loggedIn)setType("restaurant");
+}
+
+startPage();
+</script>
+</body>
+</html>
