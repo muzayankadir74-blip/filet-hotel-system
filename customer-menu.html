@@ -1,0 +1,386 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#102b4e">
+<title>Yooyyaa Hotel - Customer Menu</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#172554}
+header{background:#102b4e;color:white;padding:22px 16px;text-align:center}
+header h2{margin:0 0 7px}
+header p{margin:0;color:#dbeafe}
+.container{max-width:850px;margin:auto;padding:15px}
+.panel{background:white;padding:16px;border-radius:13px;margin-bottom:15px;box-shadow:0 2px 8px #0000000c}
+h3{margin-top:0}
+input,select{width:100%;padding:12px;margin:7px 0 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:16px}
+.tabs{display:flex;gap:8px;margin-bottom:15px}
+.tabs button{flex:1}
+button{border:0;border-radius:8px;padding:12px;background:#102b4e;color:white;font-size:15px;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.tabs button.active{background:#0d9488}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #e2e8f0;padding:13px 0}
+.item:last-child{border:0}
+.item small{display:block;color:#64748b;margin-top:5px}
+.item button{white-space:nowrap}
+.price{font-weight:bold;color:#0f766e;margin-top:5px}
+.qty{display:flex;align-items:center;gap:9px}
+.qty button{padding:6px 11px}
+.total{font-size:21px;font-weight:bold;color:#0f766e}
+.notice{padding:12px;border-radius:8px;margin:10px 0;background:#eff6ff;color:#1e40af}
+.error{background:#fee2e2;color:#991b1b}
+.success{background:#dcfce7;color:#166534}
+.hidden{display:none}
+footer{text-align:center;color:#64748b;padding:20px;font-size:13px}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>Yooyyaa Hotel</h2>
+<p>Welcome! Order food and drinks from your phone.</p>
+</header>
+
+<div class="container">
+
+<div class="panel">
+<h3>Customer Information</h3>
+
+<label>Your name</label>
+<input id="guestName" placeholder="Enter your name">
+
+<label>Order type</label>
+<select id="orderType" onchange="changeOrderType()">
+<option value="room">Room Service</option>
+<option value="table">Restaurant Table</option>
+<option value="takeaway">Takeaway</option>
+</select>
+
+<div id="roomField">
+<label>Room number</label>
+<input id="roomNumber" placeholder="Example: 101">
+</div>
+
+<div id="tableField" class="hidden">
+<label>Table number</label>
+<input id="tableNumber" placeholder="Example: 1">
+</div>
+</div>
+
+<div class="panel">
+<h3>Our Menu</h3>
+
+<div class="tabs">
+<button id="restaurantTab" class="active" onclick="showMenu('restaurant')">Restaurant</button>
+<button id="barTab" onclick="showMenu('bar')">Bar</button>
+</div>
+
+<div id="loading">Loading menu...</div>
+<div id="menuList"></div>
+</div>
+
+<div class="panel">
+<h3>Your Order</h3>
+<div id="cartList">Your cart is empty.</div>
+<hr>
+<p>Total: <span class="total" id="total">0 ETB</span></p>
+<button id="submitButton" style="width:100%" onclick="submitOrder()">
+Place Order
+</button>
+<div id="message"></div>
+</div>
+
+</div>
+
+<footer>
+Yooyyaa Hotel System · Customer Service
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://wyesygvwhlmrefqcridg.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_eVDERe3AMJoBb67sELzr6Q__Ly5Ws7V";
+
+const HOTEL_ID = "0be7a002-21fb-4af0-8ac7-7771ba63f609";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+let restaurantItems = [];
+let barItems = [];
+let currentMenu = "restaurant";
+let cart = [];
+
+function money(value){
+  return Number(value).toLocaleString("en-US") + " ETB";
+}
+
+function showMessage(message,type="notice"){
+  const box = document.getElementById("message");
+  box.className = type;
+  box.textContent = message;
+}
+
+function changeOrderType(){
+  const type = document.getElementById("orderType").value;
+
+  document.getElementById("roomField").classList.toggle(
+    "hidden",type !== "room"
+  );
+
+  document.getElementById("tableField").classList.toggle(
+    "hidden",type !== "table"
+  );
+}
+
+async function loadMenu(){
+  document.getElementById("loading").textContent =
+    "Loading menu...";
+
+  const [restaurantResult,barResult] = await Promise.all([
+    db.from("restaurant_items")
+      .select("id,name,category,quantity,price,is_available")
+      .eq("hotel_id",HOTEL_ID)
+      .eq("is_available",true)
+      .order("name"),
+
+    db.from("bar_items")
+      .select("id,name,category,quantity,price,is_available")
+      .eq("hotel_id",HOTEL_ID)
+      .eq("is_available",true)
+      .order("name")
+  ]);
+
+  if(restaurantResult.error || barResult.error){
+    document.getElementById("loading").textContent =
+      "Could not load menu. Please try again.";
+    showMessage(
+      restaurantResult.error?.message ||
+      barResult.error?.message,
+      "error"
+    );
+    return;
+  }
+
+  restaurantItems = restaurantResult.data || [];
+  barItems = barResult.data || [];
+
+  document.getElementById("loading").textContent = "";
+
+  renderMenu();
+}
+
+function showMenu(type){
+  currentMenu = type;
+
+  document.getElementById("restaurantTab").classList.toggle(
+    "active",type === "restaurant"
+  );
+
+  document.getElementById("barTab").classList.toggle(
+    "active",type === "bar"
+  );
+
+  renderMenu();
+}
+
+function renderMenu(){
+  const list = document.getElementById("menuList");
+
+  const items = currentMenu === "restaurant"
+    ? restaurantItems
+    : barItems;
+
+  if(items.length === 0){
+    list.innerHTML = "<p>No items available right now.</p>";
+    return;
+  }
+
+  list.innerHTML = "";
+
+  items.forEach(item=>{
+    const row = document.createElement("div");
+    row.className = "item";
+
+    const info = document.createElement("div");
+
+    const name = document.createElement("strong");
+    name.textContent = item.name;
+
+    const category = document.createElement("small");
+    category.textContent = item.category || "";
+
+    const price = document.createElement("div");
+    price.className = "price";
+    price.textContent = money(item.price);
+
+    info.append(name,category,price);
+
+    const add = document.createElement("button");
+    add.textContent = "Add +";
+    add.onclick = ()=>addToCart(item,currentMenu);
+
+    row.append(info,add);
+    list.appendChild(row);
+  });
+}
+
+function addToCart(item,source){
+  const key = source + "_" + item.id;
+
+  const existing = cart.find(x=>x.key === key);
+
+  if(existing){
+    existing.quantity++;
+  }else{
+    cart.push({
+      key:key,
+      id:item.id,
+      source:source,
+      name:item.name,
+      price:Number(item.price),
+      quantity:1
+    });
+  }
+
+  renderCart();
+}
+
+function updateQuantity(key,change){
+  const item = cart.find(x=>x.key === key);
+  if(!item) return;
+
+  item.quantity += change;
+
+  if(item.quantity <= 0){
+    cart = cart.filter(x=>x.key !== key);
+  }
+
+  renderCart();
+}
+
+function renderCart(){
+  const list = document.getElementById("cartList");
+  list.innerHTML = "";
+
+  if(cart.length === 0){
+    list.textContent = "Your cart is empty.";
+  }
+
+  let total = 0;
+
+  cart.forEach(item=>{
+    const subtotal = item.price * item.quantity;
+    total += subtotal;
+
+    const row = document.createElement("div");
+    row.className = "item";
+
+    const info = document.createElement("div");
+    info.textContent = item.name + " - " + money(subtotal);
+
+    const controls = document.createElement("div");
+    controls.className = "qty";
+
+    const minus = document.createElement("button");
+    minus.textContent = "-";
+    minus.onclick = ()=>updateQuantity(item.key,-1);
+
+    const number = document.createElement("span");
+    number.textContent = item.quantity;
+
+    const plus = document.createElement("button");
+    plus.textContent = "+";
+    plus.onclick = ()=>updateQuantity(item.key,1);
+
+    controls.append(minus,number,plus);
+    row.append(info,controls);
+    list.appendChild(row);
+  });
+
+  document.getElementById("total").textContent = money(total);
+}
+
+async function submitOrder(){
+  const guestName = document.getElementById("guestName")
+    .value.trim();
+
+  const orderType = document.getElementById("orderType").value;
+
+  const roomNumber = document.getElementById("roomNumber")
+    .value.trim();
+
+  const tableNumber = document.getElementById("tableNumber")
+    .value.trim();
+
+  if(!guestName){
+    showMessage("Please enter your name.","error");
+    return;
+  }
+
+  if(orderType === "room" && !roomNumber){
+    showMessage("Please enter your room number.","error");
+    return;
+  }
+
+  if(orderType === "table" && !tableNumber){
+    showMessage("Please enter your table number.","error");
+    return;
+  }
+
+  if(cart.length === 0){
+    showMessage("Please add items to your order.","error");
+    return;
+  }
+
+  const button = document.getElementById("submitButton");
+  button.disabled = true;
+  button.textContent = "Sending order...";
+
+  const items = cart.map(item=>({
+    id:item.id,
+    source:item.source,
+    quantity:item.quantity
+  }));
+
+  const {data,error} = await db.rpc(
+    "yooyyaa_place_order",
+    {
+      p_order_type:orderType,
+      p_guest_name:guestName,
+      p_room_number:orderType === "room" ? roomNumber : null,
+      p_table_number:orderType === "table" ? tableNumber : null,
+      p_items:items
+    }
+  );
+
+  button.disabled = false;
+  button.textContent = "Place Order";
+
+  if(error){
+    showMessage("Order failed: " + error.message,"error");
+    return;
+  }
+
+  cart = [];
+  renderCart();
+
+  showMessage(
+    "Your order was sent successfully! Order ID: " + data,
+    "success"
+  );
+}
+
+loadMenu();
+</script>
+
+</body>
+</html>
