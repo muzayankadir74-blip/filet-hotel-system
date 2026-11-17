@@ -30,6 +30,7 @@ th{background:#edf2f7}
 .menu-item{border:1px solid #e0e6ed;border-radius:9px;padding:12px;margin:9px 0}
 .menu-item strong{display:block;margin-bottom:5px}
 .menu-item button{margin-top:8px}
+.menu-heading{background:#edf2f7;padding:11px;border-radius:8px;margin-top:18px}
 .total{font-size:20px;font-weight:bold;margin-top:15px}
 @media(max-width:500px){.panel{padding:13px}header h1{font-size:20px}}
 </style>
@@ -37,44 +38,63 @@ th{background:#edf2f7}
 <body>
 <header>
 <h1>Yooyyaa Hotel System</h1>
-<p>Restaurant Orders — Ajaja Nyaataa</p>
+<p>Restaurant & Bar Orders — Ajaja Nyaataa fi Dhugaatii</p>
 </header>
 <main>
 <p><a class="back" href="dashboard.html">← Gara Dashboard</a></p>
 
 <section class="panel">
 <h2>🧾 Ajaja Haaraa Galmeessi</h2>
-<p class="note">Nyaata filadhu, baay'ina galchi, ajaja maamilaa kuusi.</p>
+<p class="note">Nyaataa fi dhugaatii filadhu, baay'ina galchi, ajaja maamilaa kuusi.</p>
+
 <form id="orderForm">
 <label for="guestName">Maqaa maamilaa</label>
 <input id="guestName" placeholder="Maqaa maamilaa">
+
 <label for="orderType">Gosa ajajaa</label>
 <select id="orderType" required>
 <option value="Dine-in">Minjaala (Dine-in)</option>
 <option value="Room">Kutaa hotelii (Room)</option>
 <option value="Takeaway">Fudhatanii deemuu (Takeaway)</option>
 </select>
+
 <div id="tableField">
 <label for="tableNumber">Lakkoofsa minjaalaa</label>
 <input id="tableNumber" placeholder="Fakkeenya: 1">
 </div>
+
 <div id="roomField" style="display:none">
 <label for="roomNumber">Lakkoofsa kutaa</label>
 <input id="roomNumber" placeholder="Fakkeenya: 101">
 </div>
+
 <hr style="border:0;border-top:1px solid #e5eaf0;margin:18px 0">
-<h2>🍽️ Nyaata Filadhu</h2>
-<div id="menuList">Nyaata fe'aa jira...</div>
-<h3>Nyaata Ajajame</h3>
+
+<h2>🍽️ Nyaataa fi Dhugaatii Filadhu</h2>
+<div id="menuList">Meeshaalee fe'aa jira...</div>
+
+<h3>🛒 Ajaja Filatame</h3>
 <div class="table-wrap">
 <table>
-<thead><tr><th>Nyaata</th><th>Baay'ina</th><th>Gatii</th><th>Waliigala</th><th></th></tr></thead>
-<tbody id="cartList"><tr><td colspan="5">Nyaata hin filatamne.</td></tr></tbody>
+<thead>
+<tr>
+<th>Meeshaa</th>
+<th>Baay'ina</th>
+<th>Gatii</th>
+<th>Waliigala</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="cartList">
+<tr><td colspan="5">Meeshaan hin filatamne.</td></tr>
+</tbody>
 </table>
 </div>
+
 <div class="total">Waliigala: <span id="grandTotal">0.00</span> ETB</div>
 <button type="submit" id="saveOrder">Ajaja Galmeessi</button>
 </form>
+
 <p id="message" role="status"></p>
 </section>
 
@@ -83,8 +103,19 @@ th{background:#edf2f7}
 <button type="button" class="refresh" id="refreshOrders">🔄 Haaromsi</button>
 <div class="table-wrap">
 <table>
-<thead><tr><th>Guyyaa</th><th>Maamila</th><th>Ajaja</th><th>Waliigala</th><th>Haala</th><th>Jijjiiri</th></tr></thead>
-<tbody id="ordersList"><tr><td colspan="6">Ajajawwan fe'aa jira...</td></tr></tbody>
+<thead>
+<tr>
+<th>Guyyaa</th>
+<th>Maamila</th>
+<th>Ajaja</th>
+<th>Waliigala</th>
+<th>Haala</th>
+<th>Jijjiiri</th>
+</tr>
+</thead>
+<tbody id="ordersList">
+<tr><td colspan="6">Ajajawwan fe'aa jira...</td></tr>
+</tbody>
 </table>
 </div>
 </section>
@@ -99,7 +130,11 @@ const HOTEL_ID="0be7a002-21fb-4af0-8ac7-7771ba63f609";
 const LOGIN_PAGE="./hotel-login.html";
 
 const $=id=>document.getElementById(id);
-let db=null,menuItems=[],cart=[],currentUser=null;
+
+let db=null;
+let menuItems=[];
+let cart=[];
+let currentUser=null;
 
 function message(text,success=false){
   $("message").textContent=text;
@@ -112,12 +147,14 @@ function showError(area,text){
 
 async function checkLogin(){
   const {data,error}=await db.auth.getSession();
-  if(error) throw error;
+  if(error)throw error;
+
   if(!data.session){
     message("Maaloo dura seeni. Gara fuula loginitti si geessa.");
     setTimeout(()=>location.href=LOGIN_PAGE,1200);
     return false;
   }
+
   currentUser=data.session.user;
   return true;
 }
@@ -129,104 +166,207 @@ $("orderType").addEventListener("change",()=>{
 });
 
 async function loadMenu(){
-  showError("menuList","Nyaata fe'aa jira...");
-  const {data,error}=await db.from("restaurant_items")
-    .select("id,name,category,quantity,price,is_available")
-    .eq("hotel_id",HOTEL_ID)
-    .eq("is_available",true)
-    .order("name");
+  showError("menuList","Nyaataa fi dhugaatii fe'aa jira...");
 
-  if(error){
-    showError("menuList","Nyaata argachuun hin danda'amne: "+error.message);
+  const [restaurantResult,barResult]=await Promise.all([
+    db.from("restaurant_items")
+      .select("id,name,category,quantity,price,is_available")
+      .eq("hotel_id",HOTEL_ID)
+      .eq("is_available",true)
+      .order("name"),
+
+    db.from("bar_items")
+      .select("id,name,category,quantity,price,is_available")
+      .eq("hotel_id",HOTEL_ID)
+      .eq("is_available",true)
+      .order("name")
+  ]);
+
+  if(restaurantResult.error){
+    showError("menuList","Nyaata argachuun hin danda'amne: "+restaurantResult.error.message);
     return;
   }
-  menuItems=data||[];
+
+  if(barResult.error){
+    showError("menuList","Meeshaalee Bar argachuun hin danda'amne: "+barResult.error.message);
+    return;
+  }
+
+  const restaurantItems=(restaurantResult.data||[]).map(item=>({
+    ...item,
+    source:"restaurant"
+  }));
+
+  const barItems=(barResult.data||[]).map(item=>({
+    ...item,
+    source:"bar"
+  }));
+
+  menuItems=[...restaurantItems,...barItems];
+
   renderMenu();
 }
 
 function renderMenu(){
   const area=$("menuList");
   area.replaceChildren();
+
+  const restaurantItems=menuItems.filter(x=>x.source==="restaurant");
+  const barItems=menuItems.filter(x=>x.source==="bar");
+
   if(!menuItems.length){
-    area.textContent="Nyaanni galmaa'e hin jiru.";
+    area.textContent="Nyaanni fi dhugaatiin galmaa'e hin jiru.";
     return;
   }
-  menuItems.forEach(item=>{
+
+  renderMenuGroup(area,"🍽️ Restaurant — Nyaata",restaurantItems);
+  renderMenuGroup(area,"🥤 Bar — Dhugaatii",barItems);
+}
+
+function renderMenuGroup(area,title,items){
+  const heading=document.createElement("h3");
+  heading.className="menu-heading";
+  heading.textContent=title;
+  area.appendChild(heading);
+
+  if(!items.length){
+    const empty=document.createElement("p");
+    empty.className="note";
+    empty.textContent="Meeshaan gosa kanaa hin jiru.";
+    area.appendChild(empty);
+    return;
+  }
+
+  items.forEach(item=>{
     const div=document.createElement("div");
     div.className="menu-item";
-    const title=document.createElement("strong");
-    title.textContent=item.name;
+
+    const name=document.createElement("strong");
+    name.textContent=item.name;
+
     const detail=document.createElement("span");
     detail.textContent=(item.category||"")+
       " — "+Number(item.price).toFixed(2)+" ETB";
+
     const add=document.createElement("button");
     add.type="button";
-    add.textContent="+ Nyaata Ajajaatti Dabali";
-    add.addEventListener("click",()=>addToCart(item.id));
-    div.append(title,detail,document.createElement("br"),add);
+    add.textContent="+ Ajajaatti Dabali";
+    add.addEventListener("click",()=>addToCart(item.source,item.id));
+
+    div.append(name,detail,document.createElement("br"),add);
     area.appendChild(div);
   });
 }
 
-function addToCart(id){
-  const item=menuItems.find(x=>x.id===id);
+function addToCart(source,id){
+  const item=menuItems.find(x=>x.id===id&&x.source===source);
   if(!item)return;
-  const existing=cart.find(x=>x.id===id);
-  if(existing) existing.quantity++;
-  else cart.push({id:item.id,name:item.name,price:Number(item.price),quantity:1});
+
+  const key=source+":"+id;
+  const existing=cart.find(x=>x.key===key);
+
+  if(existing){
+    existing.quantity++;
+  }else{
+    cart.push({
+      key:key,
+      source:source,
+      id:item.id,
+      name:item.name,
+      price:Number(item.price),
+      quantity:1
+    });
+  }
+
   renderCart();
 }
 
 function renderCart(){
   const body=$("cartList");
   body.replaceChildren();
+
   let total=0;
+
   if(!cart.length){
     const row=body.insertRow();
     const cell=row.insertCell();
     cell.colSpan=5;
-    cell.textContent="Nyaata hin filatamne.";
+    cell.textContent="Meeshaan hin filatamne.";
   }
+
   cart.forEach((item,index)=>{
     const subtotal=item.price*item.quantity;
     total+=subtotal;
+
     const row=body.insertRow();
     row.insertCell().textContent=item.name;
+
     const qtyCell=row.insertCell();
     const qty=document.createElement("input");
-    qty.type="number";qty.min="1";qty.step="1";qty.value=item.quantity;
+    qty.type="number";
+    qty.min="1";
+    qty.step="1";
+    qty.value=item.quantity;
     qty.style.width="75px";
+
     qty.addEventListener("change",()=>{
       const n=Number(qty.value);
       if(Number.isInteger(n)&&n>0)item.quantity=n;
       renderCart();
     });
+
     qtyCell.appendChild(qty);
     row.insertCell().textContent=item.price.toFixed(2);
     row.insertCell().textContent=subtotal.toFixed(2);
+
     const action=row.insertCell();
     const remove=document.createElement("button");
-    remove.type="button";remove.className="delete";remove.textContent="Haqi";
+    remove.type="button";
+    remove.className="delete";
+    remove.textContent="Haqi";
+
     remove.addEventListener("click",()=>{
-      cart.splice(index,1);renderCart();
+      cart.splice(index,1);
+      renderCart();
     });
+
     action.appendChild(remove);
   });
+
   $("grandTotal").textContent=total.toFixed(2);
 }
 
 $("orderForm").addEventListener("submit",async event=>{
   event.preventDefault();
-  if(!currentUser){message("Maaloo dura seeni.");return;}
-  if(!cart.length){message("Maaloo dura nyaata filadhu.");return;}
+
+  if(!currentUser){
+    message("Maaloo dura seeni.");
+    return;
+  }
+
+  if(!cart.length){
+    message("Maaloo dura nyaata ykn dhugaatii filadhu.");
+    return;
+  }
 
   const type=$("orderType").value;
   const tableNumber=$("tableNumber").value.trim();
   const roomNumber=$("roomNumber").value.trim();
-  if(type==="Dine-in"&&!tableNumber){message("Lakkoofsa minjaalaa guuti.");return;}
-  if(type==="Room"&&!roomNumber){message("Lakkoofsa kutaa guuti.");return;}
 
-  const total=cart.reduce((sum,item)=>sum+item.price*item.quantity,0);
+  if(type==="Dine-in"&&!tableNumber){
+    message("Lakkoofsa minjaalaa guuti.");
+    return;
+  }
+
+  if(type==="Room"&&!roomNumber){
+    message("Lakkoofsa kutaa guuti.");
+    return;
+  }
+
+  const total=cart.reduce(
+    (sum,item)=>sum+item.price*item.quantity,0
+  );
+
   $("saveOrder").disabled=true;
   message("Ajaja kuusaa jira...",true);
 
@@ -242,20 +382,28 @@ $("orderForm").addEventListener("submit",async event=>{
     };
 
     const {data:order,error:orderError}=await db
-      .from("restaurant_orders").insert([orderData])
-      .select("id").single();
+      .from("restaurant_orders")
+      .insert([orderData])
+      .select("id")
+      .single();
 
     if(orderError)throw orderError;
 
     const orderItems=cart.map(item=>({
-      hotel_id:HOTEL_ID,order_id:order.id,item_name:item.name,
-      quantity:item.quantity,unit_price:item.price,
+      hotel_id:HOTEL_ID,
+      order_id:order.id,
+      item_name:item.name,
+      quantity:item.quantity,
+      unit_price:item.price,
       subtotal:item.price*item.quantity
     }));
 
-    const {error:itemError}=await db.from("restaurant_order_items").insert(orderItems);
+    const {error:itemError}=await db
+      .from("restaurant_order_items")
+      .insert(orderItems);
+
     if(itemError){
-      message("Ajajni uumameera, garuu tarreen nyaataa hin kuufamne: "+itemError.message);
+      message("Ajajni uumameera, garuu tarreen meeshaalee hin kuufamne: "+itemError.message);
       return;
     }
 
@@ -263,9 +411,13 @@ $("orderForm").addEventListener("submit",async event=>{
     $("orderForm").reset();
     $("tableField").style.display="block";
     $("roomField").style.display="none";
+
     renderCart();
-    message("Ajajni milkaa'inaan galmaa'e!",true);
+
+    message("Ajajni nyaataa fi dhugaatii milkaa'inaan galmaa'e!",true);
+
     await loadOrders();
+
   }catch(error){
     message("Ajaja kuusuun hin danda'amne: "+(error.message||String(error)));
   }finally{
@@ -275,10 +427,12 @@ $("orderForm").addEventListener("submit",async event=>{
 
 async function loadOrders(){
   showError("ordersList","Ajajawwan fe'aa jira...");
+
   const {data,error}=await db.from("restaurant_orders")
     .select("id,guest_name,order_type,table_number,room_number,status,total_amount,created_at")
     .eq("hotel_id",HOTEL_ID)
-    .order("created_at",{ascending:false}).limit(50);
+    .order("created_at",{ascending:false})
+    .limit(50);
 
   if(error){
     showError("ordersList","Ajajawwan argachuun hin danda'amne: "+error.message);
@@ -287,69 +441,108 @@ async function loadOrders(){
 
   const body=$("ordersList");
   body.replaceChildren();
+
   if(!data||!data.length){
     const row=body.insertRow();
     const cell=row.insertCell();
-    cell.colSpan=6;cell.textContent="Ajajni hin galmoofne.";
+    cell.colSpan=6;
+    cell.textContent="Ajajni hin galmoofne.";
     return;
   }
 
   data.forEach(order=>{
     const row=body.insertRow();
+
     row.insertCell().textContent=new Date(order.created_at).toLocaleString();
     row.insertCell().textContent=order.guest_name||"-";
+
     let place=order.order_type||"-";
     if(order.table_number)place+=" / Minjaala "+order.table_number;
     if(order.room_number)place+=" / Kutaa "+order.room_number;
+
     row.insertCell().textContent=place;
     row.insertCell().textContent=Number(order.total_amount).toFixed(2)+" ETB";
 
     const statusCell=row.insertCell();
     const select=document.createElement("select");
+
     ["Pending","Preparing","Ready","Served","Cancelled"].forEach(status=>{
       const option=document.createElement("option");
-      option.value=status;option.textContent=status;
+      option.value=status;
+      option.textContent=status;
       select.appendChild(option);
     });
+
     select.value=order.status;
+
     if(!select.value){
       const option=document.createElement("option");
-      option.value=order.status;option.textContent=order.status;
-      select.appendChild(option);select.value=order.status;
+      option.value=order.status;
+      option.textContent=order.status;
+      select.appendChild(option);
+      select.value=order.status;
     }
-    select.addEventListener("change",()=>updateStatus(order.id,select.value,select));
+
+    select.addEventListener("change",()=>{
+      updateStatus(order.id,select.value,select);
+    });
+
     statusCell.appendChild(select);
 
     const actionCell=row.insertCell();
     const detail=document.createElement("button");
-    detail.type="button";detail.className="refresh";
-    detail.textContent="Nyaata";
+
+    detail.type="button";
+    detail.className="refresh";
+    detail.textContent="Meeshaalee";
     detail.addEventListener("click",()=>showOrderItems(order.id));
+
     actionCell.appendChild(detail);
   });
 }
 
 async function updateStatus(id,status,control){
   control.disabled=true;
+
   const {error}=await db.from("restaurant_orders")
-    .update({status}).eq("id",id).eq("hotel_id",HOTEL_ID);
+    .update({status})
+    .eq("id",id)
+    .eq("hotel_id",HOTEL_ID);
+
   control.disabled=false;
+
   if(error){
     message("Haala ajajaa jijjiiruun hin danda'amne: "+error.message);
-    await loadOrders();return;
+    await loadOrders();
+    return;
   }
+
   message("Haalli ajajaa jijjiirame.",true);
 }
 
 async function showOrderItems(orderId){
   const {data,error}=await db.from("restaurant_order_items")
     .select("item_name,quantity,unit_price,subtotal")
-    .eq("order_id",orderId).eq("hotel_id",HOTEL_ID);
-  if(error){message("Nyaata ajajaa argachuun hin danda'amne: "+error.message);return;}
-  if(!data||!data.length){alert("Nyaanni ajajaa kanaa hin argamne.");return;}
-  const lines=data.map(item=>item.item_name+" — "+item.quantity+" x "+
-    Number(item.unit_price).toFixed(2)+" = "+Number(item.subtotal).toFixed(2)+" ETB");
-  alert("Nyaata ajajaa:\n\n"+lines.join("\n"));
+    .eq("order_id",orderId)
+    .eq("hotel_id",HOTEL_ID);
+
+  if(error){
+    message("Meeshaalee ajajaa argachuun hin danda'amne: "+error.message);
+    return;
+  }
+
+  if(!data||!data.length){
+    alert("Meeshaaleen ajajaa kanaa hin argamne.");
+    return;
+  }
+
+  const lines=data.map(item=>
+    item.item_name+" — "+item.quantity+" x "+
+    Number(item.unit_price).toFixed(2)+" = "+
+    Number(item.subtotal).toFixed(2)+" ETB"
+  );
+
+  alert("Meeshaalee ajajaa:\n\n"+lines.join("\n"));
 }
 
 $("refreshOrders").addEventListener("click",loadOrders);
@@ -359,10 +552,14 @@ async function startPage(){
     if(!window.supabase){
       throw new Error("Supabase library hin fe'amne. Internet kee mirkaneessi.");
     }
+
     db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
     const loggedIn=await checkLogin();
     if(!loggedIn)return;
+
     await Promise.all([loadMenu(),loadOrders()]);
+
   }catch(error){
     showError("menuList","Dogoggora: "+(error.message||String(error)));
     showError("ordersList","Dogoggora: "+(error.message||String(error)));
