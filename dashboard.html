@@ -4,7 +4,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Yooyyaa Hotel System - Dashboard</title>
+
+  <!-- PWA SETTINGS -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#102b4e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Yooyyaa Hotel">
+  <link rel="apple-touch-icon" href="./icon-192.png">
 
   <style>
     * { box-sizing: border-box; }
@@ -180,27 +189,16 @@
     <nav class="menu">
 
       <a href="./room-management.html">🛏️ Room Management</a>
-
       <a href="./guest-registration.html">👤 Guest Registration</a>
-
       <a href="./guests.html">📋 Guest Records</a>
-
       <a href="./bookings.html">📅 Bookings</a>
-
       <a href="./payments.html">💰 Payments</a>
-
       <a href="./hotel-profile.html">🏨 Hotel Profile</a>
-
       <a href="./bar-management.html">🍹 Bar Management</a>
-
       <a href="./restaurant-management.html">🍽️ Restaurant</a>
-
       <a href="./restaurant-orders.html">🧾 Restaurant Orders</a>
-
       <a href="./sales-report.html">📊 Sales Report</a>
-
       <a href="./expenses.html">💸 Expenses Management</a>
-
       <a href="./net-profit-report.html">📈 Net Profit Report</a>
 
     </nav>
@@ -394,6 +392,21 @@
 
     start();
   })();
+  </script>
+
+  <!-- SERVICE WORKER REGISTRATION -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js")
+          .then(registration => {
+            console.log("Yooyyaa Service Worker registered:", registration.scope);
+          })
+          .catch(error => {
+            console.error("Service Worker registration failed:", error);
+          });
+      });
+    }
   </script>
 
 </body>
